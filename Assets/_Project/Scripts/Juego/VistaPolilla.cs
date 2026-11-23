@@ -77,8 +77,8 @@ namespace DesenredaElOvillo.Juego
             float frecuencia = Volando ? 24f : 7f * _aleteo;
             float amplitud = Volando ? 38f : 14f * _aleteo;
             float batido = Mathf.Sin(t * frecuencia) * amplitud;
-            if (_alaIzq != null) _alaIzq.localRotation = _alaIzqBase * Quaternion.Euler(0, 0, batido);
-            if (_alaDer != null) _alaDer.localRotation = _alaDerBase * Quaternion.Euler(0, 0, -batido);
+            if (_alaIzq != null) _alaIzq.localRotation = _alaIzqBase * Quaternion.Euler(0, batido, 0);
+            if (_alaDer != null) _alaDer.localRotation = _alaDerBase * Quaternion.Euler(0, -batido, 0);
             float bote = Volando ? AlturaVuelo + Mathf.Sin(t * 6f) * 0.04f : Mathf.Abs(Mathf.Sin(t * 3f)) * 0.015f;
             var pos = _cuerpoBase + Vector3.up * bote;
             if (_temblor > 0)

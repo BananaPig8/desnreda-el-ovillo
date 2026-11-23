@@ -14,7 +14,11 @@
     <Compile Include="*.cs" />
     <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Pintor.cs" />
     <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Paleta.cs" />
-    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Texturas.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Iconos.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/Mallas.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/TexturasTres.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/Modelos.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/Decorado.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Nucleo/Nucleo.csproj" />

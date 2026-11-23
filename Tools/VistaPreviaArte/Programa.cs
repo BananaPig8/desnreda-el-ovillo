@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using DesenredaElOvillo.Juego;
+using DesenredaElOvillo.Juego.Tres;
 using DesenredaElOvillo.Nucleo;
 using UnityEngine;
 
@@ -13,37 +14,50 @@ public static class Programa
         Directory.CreateDirectory(salida);
         void Guardar(string nombre, Sprite s) => Png(Path.Combine(salida, nombre + ".png"), s.texture);
 
-        foreach (TipoPolilla t in Enum.GetValues(typeof(TipoPolilla)))
-        {
-            Guardar("alas_" + t, Texturas.AlasPolilla(t));
-            Guardar("cuerpo_" + t, Texturas.CuerpoPolilla(t));
-        }
-        Guardar("placas", Texturas.PlacasAcorazada());
-        Guardar("capa_reina", Texturas.CapaReina());
-        Guardar("corona", Texturas.Corona());
+        // Iconos de la interfaz (2D)
         foreach (TipoHerramienta t in Enum.GetValues(typeof(TipoHerramienta)))
-            Guardar("herramienta_" + t, Texturas.Herramienta(t));
-        Guardar("herramienta_Alfiler_doblada", Texturas.Herramienta(TipoHerramienta.Alfiler, true));
-        Guardar("casilla_0", Texturas.Casilla(0));
-        Guardar("casilla_1", Texturas.Casilla(1));
-        Guardar("mesa", Texturas.Mesa());
-        foreach (char c in new[] { '#', 'o', 'u', 'c', 'a', 'm', 't' }) Guardar("obstaculo_" + (int)c, Texturas.Obstaculo(c));
-        for (int v = 0; v <= 4; v++) Guardar("carrete_" + v, Texturas.Carrete(v, 4));
-        Guardar("entrada", Texturas.Entrada());
-        Guardar("lampara", Texturas.Lampara());
-        Guardar("brillo", Texturas.Brillo());
-        Guardar("huella", Texturas.Huella());
-        Guardar("circulo", Texturas.Circulo());
-        for (int m = 1; m < 16; m++)
+            Guardar("icono_" + t, Iconos.Herramienta(t));
+        Guardar("icono_carrete", Iconos.Carrete(1, 1));
+        Guardar("icono_lana", Iconos.PiezaLana(Iconos.Derecha | Iconos.Izquierda));
+        Png(Path.Combine(salida, "ui_panel.png"), Iconos.Panel(Paleta.Crema, Paleta.Hex("#C98A5A"), "ui_panel"));
+        Png(Path.Combine(salida, "ui_boton.png"), Iconos.Panel(Paleta.Coral, Paleta.Crema, "ui_boton"));
+
+        // Texturas de los materiales 3D (color + normales)
+        foreach (var t in new[] { TexturasTres.Fieltro(), TexturasTres.Casilla(), TexturasTres.Lana(), TexturasTres.Madera(), TexturasTres.Tela(), TexturasTres.Velcro() })
         {
-            int bits = 0; for (int k = 0; k < 4; k++) if ((m & (1 << k)) != 0) bits++;
-            if (bits <= 2) Guardar("lana_" + m, Texturas.PiezaLana(m));
+            Png(Path.Combine(salida, t.Nombre + ".png"), t.Color);
+            Png(Path.Combine(salida, t.Nombre + "_n.png"), t.Normal);
         }
-        Png(Path.Combine(salida, "ui_panel.png"), Texturas.Panel(Paleta.Crema, Paleta.Hex("#C98A5A"), "ui_panel"));
-        Png(Path.Combine(salida, "ui_boton.png"), Texturas.Panel(Paleta.Coral, Paleta.Crema, "ui_boton"));
-        Png(Path.Combine(salida, "ui_panel_oscuro.png"), Texturas.Panel(Paleta.Hex("#5A3A28"), Paleta.Hex("#E9C79E"), "ui_panel_oscuro"));
-        Console.WriteLine("Arte provisional escrito en " + Path.GetFullPath(salida));
+
+        // Escenas 3D para el visor three.js
+        string raiz = RaizRepositorio();
+        Sala Cargar(string id) => Sala.DesdeTexto(File.ReadAllText(Path.Combine(raiz, "Assets", "_Project", "Resources", "Salas", id + ".txt")));
+        Exportar3D.Sala(Cargar("sala2"), new (TipoPolilla, int, bool)[] { (TipoPolilla.Comun, 7, false), (TipoPolilla.Veloz, 11, true), (TipoPolilla.Comun, 14, false) })
+            .Guardar(Path.Combine(salida, "escena_sala2.json"));
+        Exportar3D.Sala(Cargar("sala5"), new (TipoPolilla, int, bool)[] { (TipoPolilla.Reina, 9, false), (TipoPolilla.Comun, 12, false), (TipoPolilla.Acorazada, 5, false) })
+            .Guardar(Path.Combine(salida, "escena_sala5.json"));
+        Exportar3D.Personajes().Guardar(Path.Combine(salida, "escena_personajes.json"));
+        Exportar3D.Giro(Modelos.Ovillo(), 1.3f).Guardar(Path.Combine(salida, "giro_ovillo.json"));
+        foreach (TipoPolilla t in Enum.GetValues(typeof(TipoPolilla)))
+            Exportar3D.Giro(Modelos.Polilla(t), 1f).Guardar(Path.Combine(salida, "giro_" + t.ToString().ToLowerInvariant() + ".json"));
+        Console.WriteLine("Arte y escenas escritos en " + Path.GetFullPath(salida));
         return 0;
+    }
+
+    private static string RaizRepositorio()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "Assets", "_Project"))) dir = dir.Parent;
+        return dir?.FullName ?? ".";
+    }
+
+    private static void Png(string ruta, Pintor p)
+    {
+        var t = new Texture2D(p.Ancho, p.Alto, TextureFormat.RGBA32, false);
+        for (int y = 0; y < p.Alto; y++)
+            for (int x = 0; x < p.Ancho; x++)
+                t.Pixeles[y * p.Ancho + x] = p.Leer(x, y);
+        Png(ruta, t);
     }
 
     /// <summary>Codificador PNG mínimo (RGBA 8 bits). Unity guarda las texturas de abajo arriba; PNG de arriba abajo.</summary>

@@ -20,10 +20,64 @@ namespace UnityEngine
         public static Vector2 operator /(Vector2 a, float k) => new Vector2(a.x / k, a.y / k);
     }
 
+    public struct Vector3
+    {
+        public float x, y, z;
+        public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
+        public static Vector3 zero => new Vector3(0, 0, 0);
+        public static Vector3 one => new Vector3(1, 1, 1);
+        public static Vector3 up => new Vector3(0, 1, 0);
+        public static Vector3 down => new Vector3(0, -1, 0);
+        public static Vector3 right => new Vector3(1, 0, 0);
+        public static Vector3 left => new Vector3(-1, 0, 0);
+        public static Vector3 forward => new Vector3(0, 0, 1);
+        public static Vector3 back => new Vector3(0, 0, -1);
+        public float magnitude => MathF.Sqrt(x * x + y * y + z * z);
+        public float sqrMagnitude => x * x + y * y + z * z;
+        public Vector3 normalized { get { float m = magnitude; return m > 1e-8f ? this / m : zero; } }
+        public static Vector3 Cross(Vector3 a, Vector3 b) => new Vector3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+        public static float Dot(Vector3 a, Vector3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+        public static Vector3 Lerp(Vector3 a, Vector3 b, float t) { t = Mathf.Clamp01(t); return a + (b - a) * t; }
+        public static Vector3 operator +(Vector3 a, Vector3 b) => new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
+        public static Vector3 operator -(Vector3 a, Vector3 b) => new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
+        public static Vector3 operator -(Vector3 a) => new Vector3(-a.x, -a.y, -a.z);
+        public static Vector3 operator *(Vector3 a, float k) => new Vector3(a.x * k, a.y * k, a.z * k);
+        public static Vector3 operator *(float k, Vector3 a) => new Vector3(a.x * k, a.y * k, a.z * k);
+        public static Vector3 operator /(Vector3 a, float k) => new Vector3(a.x / k, a.y / k, a.z / k);
+    }
+
+    /// <summary>Misma convención que Unity: Euler(x, y, z) aplica z, luego x, luego y.</summary>
+    public struct Quaternion
+    {
+        public float x, y, z, w;
+        public Quaternion(float x, float y, float z, float w) { this.x = x; this.y = y; this.z = z; this.w = w; }
+        public static Quaternion identity => new Quaternion(0, 0, 0, 1);
+        public static Quaternion AngleAxis(float grados, Vector3 eje)
+        {
+            eje = eje.normalized;
+            float m = grados * Mathf.Deg2Rad * 0.5f, s = MathF.Sin(m);
+            return new Quaternion(eje.x * s, eje.y * s, eje.z * s, MathF.Cos(m));
+        }
+        public static Quaternion Euler(float x, float y, float z) => AngleAxis(y, Vector3.up) * AngleAxis(x, Vector3.right) * AngleAxis(z, Vector3.forward);
+        public static Quaternion Euler(Vector3 e) => Euler(e.x, e.y, e.z);
+        public static Quaternion operator *(Quaternion a, Quaternion b) => new Quaternion(
+            a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+            a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+            a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+            a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z);
+        public static Vector3 operator *(Quaternion q, Vector3 v)
+        {
+            var u = new Vector3(q.x, q.y, q.z);
+            var t = Vector3.Cross(u, v) * 2f;
+            return v + t * q.w + Vector3.Cross(u, t);
+        }
+    }
+
     public struct Color
     {
         public float r, g, b, a;
         public Color(float r, float g, float b, float a = 1f) { this.r = r; this.g = g; this.b = b; this.a = a; }
+        public static Color operator *(Color c, float k) => new Color(c.r * k, c.g * k, c.b * k, c.a * k);
         public static Color white => new Color(1, 1, 1, 1);
         public static Color black => new Color(0, 0, 0, 1);
         public static Color clear => new Color(0, 0, 0, 0);
@@ -38,6 +92,9 @@ namespace UnityEngine
     {
         public const float PI = MathF.PI;
         public const float Deg2Rad = MathF.PI / 180f;
+        public const float Rad2Deg = 180f / MathF.PI;
+        public static float Acos(float v) => MathF.Acos(v);
+        public static float Tan(float v) => MathF.Tan(v);
         public static float Clamp01(float v) => v < 0 ? 0 : v > 1 ? 1 : v;
         public static float Clamp(float v, float a, float b) => v < a ? a : v > b ? b : v;
         public static int Clamp(int v, int a, int b) => v < a ? a : v > b ? b : v;
@@ -86,6 +143,7 @@ namespace UnityEngine
         public TextureWrapMode wrapMode;
         public FilterMode filterMode;
         public Texture2D(int w, int h, TextureFormat f, bool mip) { width = w; height = h; Pixeles = new Color[w * h]; }
+        public Texture2D(int w, int h, TextureFormat f, bool mip, bool lineal) : this(w, h, f, mip) { }
         public void SetPixels(Color[] px) => Array.Copy(px, Pixeles, px.Length);
         public void SetPixel(int x, int y, Color c) => Pixeles[y * width + x] = c;
         public void Apply(bool a = true, bool b = false) { }

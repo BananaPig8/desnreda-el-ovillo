@@ -40,6 +40,7 @@ namespace DesenredaElOvillo.Juego
                 // Encima de la lana (el velcro, debajo: la lana pasa por encima).
                 float altura = debajo ? Medidas.AlturaCasilla : Medidas.AlturaLana + Medidas.RadioLana * 0.55f;
                 modelo.Raiz.position = new Vector3(celda.X + 0.5f, altura, celda.Y + 0.5f);
+                if (!debajo) modelo.Raiz.localScale = Vector3.one * 1.2f;
                 var p = new Pieza3D { Tipo = c.Tipo, Indice = c.Indice, Modelo = modelo };
                 var def = reglas.Herramienta(c.Tipo);
                 for (int u = 0; u < def.Usos; u++)

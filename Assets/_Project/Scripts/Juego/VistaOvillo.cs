@@ -27,6 +27,7 @@ namespace DesenredaElOvillo.Juego
             go.transform.SetParent(padre, false);
             go.transform.position = posicion;
             go.transform.rotation = Quaternion.Euler(0, -25f, 0);
+            go.transform.localScale = Vector3.one * 1.3f;
             var v = go.AddComponent<VistaOvillo>();
             v._modelo = Constructor.Instanciar(Modelos.Ovillo(), go.transform);
             v._cuerpo = v._modelo.Primero("cuerpo");

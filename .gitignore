@@ -49,3 +49,8 @@ Tools/**/TestResults/
 # ---------------------------------------------------------------- Sistema
 .DS_Store
 Thumbs.db
+
+# ---------------------------------------------------------------- Vista previa 3D (Tools/VistaPreviaArte/visor)
+Tools/VistaPreviaArte/visor/datos/
+Tools/VistaPreviaArte/visor/node_modules/
+Tools/VistaPreviaArte/visor/package-lock.json

@@ -142,13 +142,13 @@ namespace DesenredaElOvillo.Juego.Tres
             switch (t)
             {
                 case TipoPolilla.Veloz:
-                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#EE8C9E"), Ala = Paleta.Hex("#F7BCC7"), AlaMancha = Paleta.Hex("#EE8AA0"), Antena = Paleta.Hex("#7A4436"), Mejilla = Paleta.Hex("#F37E7E"), Tamano = 0.34f, EscalaAla = 1.25f, Antenas = 1.5f };
+                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#EE8C9E"), Ala = Paleta.Hex("#F7BCC7"), AlaMancha = Paleta.Hex("#EE8AA0"), Antena = Paleta.Hex("#7A4436"), Mejilla = Paleta.Hex("#F37E7E"), Tamano = 0.46f, EscalaAla = 1.2f, Antenas = 1.5f };
                 case TipoPolilla.Acorazada:
-                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#706B8A"), Ala = Paleta.Hex("#EED6B4"), AlaMancha = Paleta.Hex("#D9BE98"), Antena = Paleta.Hex("#4A3A3A"), Mejilla = Paleta.Hex("#E9B070"), Tamano = 0.5f, EscalaAla = 0.85f, Antenas = 1f };
+                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#7D7896"), Ala = Paleta.Hex("#EED6B4"), AlaMancha = Paleta.Hex("#D9BE98"), Antena = Paleta.Hex("#4A3A3A"), Mejilla = Paleta.Hex("#E9B070"), Tamano = 0.64f, EscalaAla = 0.8f, Antenas = 1f };
                 case TipoPolilla.Reina:
-                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#D7A2C8"), Ala = Paleta.Hex("#7B3F94"), AlaMancha = Paleta.Hex("#C25B86"), Antena = Paleta.Hex("#6C3A4E"), Mejilla = Paleta.Hex("#F08DA0"), Tamano = 0.62f, EscalaAla = 1.55f, Antenas = 0.8f };
+                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#D7A2C8"), Ala = Paleta.Hex("#7B3F94"), AlaMancha = Paleta.Hex("#C25B86"), Antena = Paleta.Hex("#6C3A4E"), Mejilla = Paleta.Hex("#F08DA0"), Tamano = 0.82f, EscalaAla = 1.35f, Antenas = 0.8f };
                 default:
-                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#9467B8"), Ala = Paleta.Hex("#F3DEC0"), AlaMancha = Paleta.Hex("#C7A6DE"), Antena = Paleta.Hex("#5A3550"), Mejilla = Paleta.Hex("#E8869E"), Tamano = 0.42f, EscalaAla = 1f, Antenas = 1f };
+                    return new EstiloPolilla { Cuerpo = Paleta.Hex("#9467B8"), Ala = Paleta.Hex("#F3DEC0"), AlaMancha = Paleta.Hex("#C7A6DE"), Antena = Paleta.Hex("#5A3550"), Mejilla = Paleta.Hex("#E8869E"), Tamano = 0.56f, EscalaAla = 1f, Antenas = 1f };
             }
         }
 
@@ -164,14 +164,15 @@ namespace DesenredaElOvillo.Juego.Tres
             var cuerpo = raiz.Hijo(Pivote("Cuerpo", V(0, s * 0.58f, 0), null, "cuerpo"));
             cuerpo.Hijo(P("Bola de lana", "esfera", "lana", e.Cuerpo, Vector3.zero, V(s, s * 0.95f, s * 1.04f)));
 
-            // alas: pivote en el lomo para poder batirlas
+            // alas de fieltro detrás del cuerpo, levantadas en V (como en la hoja de personajes);
+            // la bisagra es vertical, en el lomo, para batirlas abriendo y cerrando
             for (int lado = -1; lado <= 1; lado += 2)
             {
-                var pivote = cuerpo.Hijo(Pivote("Ala", V(lado * s * 0.18f, s * 0.2f, s * 0.16f), V(-18, 0, lado * -28), lado < 0 ? "ala_izq" : "ala_der"));
-                float a = s * 0.62f * e.EscalaAla;
-                pivote.Hijo(P("Ala alta", "esfera", "fieltro", e.Ala, V(lado * a * 0.5f, a * 0.25f, 0.02f), V(a, s * 0.06f, a * 0.72f), V(0, 0, lado * 12)));
-                pivote.Hijo(P("Mancha", "esfera_baja", "fieltro", e.AlaMancha, V(lado * a * 0.62f, a * 0.27f + s * 0.032f, 0.02f), V(a * 0.36f, s * 0.02f, a * 0.28f), V(0, 0, lado * 12)));
-                pivote.Hijo(P("Ala baja", "esfera", "fieltro", Paleta.Oscurecer(e.Ala, 0.06f), V(lado * a * 0.36f, -a * 0.1f, a * 0.32f), V(a * 0.62f, s * 0.05f, a * 0.46f), V(0, 30 * lado, lado * 8)));
+                var pivote = cuerpo.Hijo(Pivote("Ala", V(lado * s * 0.12f, s * 0.12f, s * 0.3f), V(-12, lado * 18, 0), lado < 0 ? "ala_izq" : "ala_der"));
+                float a = s * 0.78f * e.EscalaAla;
+                pivote.Hijo(P("Ala alta", "esfera", "fieltro", e.Ala, V(lado * a * 0.46f, a * 0.42f, 0), V(a * 0.95f, a * 1.05f, s * 0.06f), V(0, 0, lado * -24)));
+                pivote.Hijo(P("Mancha", "esfera_baja", "fieltro", e.AlaMancha, V(lado * a * 0.55f, a * 0.55f, -s * 0.032f), V(a * 0.36f, a * 0.4f, s * 0.02f), V(0, 0, lado * -24)));
+                pivote.Hijo(P("Ala baja", "esfera", "fieltro", Paleta.Oscurecer(e.Ala, 0.06f), V(lado * a * 0.42f, -a * 0.12f, s * 0.02f), V(a * 0.62f, a * 0.56f, s * 0.05f), V(0, 0, lado * 30)));
             }
 
             // antenas
@@ -188,12 +189,12 @@ namespace DesenredaElOvillo.Juego.Tres
             float z = -s * 0.47f;
             for (int lado = -1; lado <= 1; lado += 2)
             {
-                var ojo = cara.Hijo(P("Ojo", "esfera", "brillante", Oscuro, V(lado * s * 0.17f, s * 0.05f, z), V(s * 0.16f, s * 0.2f, s * 0.1f), null, "ojos"));
+                var ojo = cara.Hijo(P("Ojo", "esfera", "brillante", Oscuro, V(lado * s * 0.18f, s * 0.04f, z), V(s * 0.21f, s * 0.26f, s * 0.12f), null, "ojos"));
                 ojo.Hijo(P("Brillo", "esfera_baja", "brillante", Blanco, V(-0.2f, 0.25f, -0.45f), Vector3.one * 0.3f));
-                cara.Hijo(P("Ceja", CatalogoMallas.Caja(s * 0.2f, s * 0.045f, s * 0.05f, s * 0.02f), "fieltro", Oscuro, V(lado * s * 0.17f, s * 0.21f, z * 0.96f), null, V(0, 0, lado * (tipo == TipoPolilla.Acorazada ? 30 : 22))));
+                cara.Hijo(P("Ceja", CatalogoMallas.Caja(s * 0.22f, s * 0.05f, s * 0.05f, s * 0.022f), "fieltro", Oscuro, V(lado * s * 0.18f, s * 0.22f, z * 0.94f), null, V(0, 0, lado * (tipo == TipoPolilla.Acorazada ? 30 : 22))));
                 cara.Hijo(P("Mejilla", "esfera_baja", "fieltro", e.Mejilla, V(lado * s * 0.31f, -s * 0.1f, z * 0.82f), V(s * 0.12f, s * 0.08f, s * 0.04f), V(0, lado * -35f, 0)));
                 if (tipo == TipoPolilla.Reina)
-                    cara.Hijo(P("Sombra de ojos", "esfera_baja", "fieltro", Paleta.Hex("#8E4FA3"), V(lado * s * 0.17f, s * 0.14f, z * 0.985f), V(s * 0.2f, s * 0.07f, s * 0.05f)));
+                    cara.Hijo(P("Sombra de ojos", "esfera_baja", "fieltro", Paleta.Hex("#8E4FA3"), V(lado * s * 0.18f, s * 0.15f, z * 0.985f), V(s * 0.24f, s * 0.08f, s * 0.05f)));
             }
             cara.Hijo(P("Boca", CatalogoMallas.Caja(s * 0.1f, s * 0.025f, s * 0.03f, s * 0.012f), "fieltro", Oscuro, V(0, -s * 0.12f, z * 1.01f)));
 
@@ -220,7 +221,7 @@ namespace DesenredaElOvillo.Juego.Tres
                 {
                     var capa = cuerpo.Hijo(Pivote("Capa", V(0, -s * 0.12f, 0), null, "capa"));
                     capa.Hijo(P("Capa", "esfera", "tela", Paleta.Hex("#B8395E"), V(0, -s * 0.12f, s * 0.06f), V(s * 1.12f, s * 0.75f, s * 1.08f)));
-                    capa.Hijo(P("Cuello de piel", CatalogoMallas.Toro(s * 0.34f, s * 0.11f), "lana", Paleta.Hex("#F4E2CB"), V(0, s * 0.2f, 0)));
+                    capa.Hijo(P("Cuello de piel", CatalogoMallas.Toro(s * 0.4f, s * 0.13f), "lana", Paleta.Hex("#F4E2CB"), V(0, s * 0.02f, 0), V(1f, 0.9f, 1f)));
                     for (int lado = -1; lado <= 1; lado += 2)
                         capa.Hijo(P("Botón dorado", CatalogoMallas.Cilindro(s * 0.07f, s * 0.07f, s * 0.03f), "oro", Paleta.Mostaza, V(lado * s * 0.2f, 0, -s * 0.5f), null, V(90, 0, 0)));
                     var corona = cuerpo.Hijo(Pivote("Corona", V(0, s * 0.5f, 0), null, "corona"));

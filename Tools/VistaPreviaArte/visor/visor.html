@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Vista previa 3D</title>
+<style>html,body{margin:0;background:#3B2618;overflow:hidden}</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js"}}</script>
+</head>
+<body>
+<script type="module">
+// Visor de las escenas exportadas por Tools/VistaPreviaArte (misma geometría y materiales que en Unity).
+import * as THREE from 'three';
+const q = new URLSearchParams(location.search);
+const W = +(q.get('w') || 1600), H = +(q.get('h') || 900);
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H);
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#3B2618');
+scene.fog = new THREE.Fog('#3B2618', 26, 55);
+const datos = await (await fetch('datos/' + q.get('escena') + '.json')).json();
+
+const cargador = new THREE.TextureLoader();
+const texturas = {};
+async function tex(nombre, rep, srgb) {
+  const clave = nombre + '|' + rep + '|' + srgb;
+  if (!texturas[clave]) {
+    const t = await cargador.loadAsync('datos/' + nombre + '.png');
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(rep, rep);
+    t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    t.anisotropy = 8;
+    texturas[clave] = t;
+  }
+  return texturas[clave];
+}
+// Mismos valores que Fabrica.cs (suavidad Unity -> rugosidad = 1 - suavidad).
+const defs = {
+  fieltro: { t: 'fieltro', rep: 1.2, s: 0.06, m: 0 }, casilla: { t: 'casilla', rep: 1, s: 0.05, m: 0 },
+  lana: { t: 'lana', rep: 1, s: 0.12, m: 0 }, madera: { t: 'madera', rep: 0.7, s: 0.28, m: 0 },
+  mesa: { t: 'madera', rep: 7, s: 0.32, m: 0 }, tela: { t: 'tela', rep: 1, s: 0.12, m: 0 },
+  velcro: { t: 'velcro', rep: 1, s: 0.1, m: 0 }, metal: { s: 0.62, m: 0.85 }, oro: { s: 0.55, m: 0.9 },
+  boton: { t: 'fieltro', rep: 0.25, s: 0.42, m: 0 }, brillante: { s: 0.86, m: 0 }, emisivo: { s: 0.3, m: 0, e: true }
+};
+const materiales = {};
+async function material(id, c) {
+  const clave = id + c.join(',');
+  if (materiales[clave]) return materiales[clave];
+  const d = defs[id] || defs.fieltro;
+  const color = new THREE.Color().setRGB(c[0], c[1], c[2], THREE.SRGBColorSpace);
+  const p = { color, roughness: 1 - d.s, metalness: d.m };
+  if (d.t) { p.map = await tex(d.t, d.rep, true); p.normalMap = await tex(d.t + '_n', d.rep, false); }
+  if (d.e) { p.emissive = color.clone().multiplyScalar(2.2); }
+  return (materiales[clave] = new THREE.MeshStandardMaterial(p));
+}
+const geometrias = {};
+for (const [k, g] of Object.entries(datos.mallas)) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(g.v, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(g.n, 3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(g.uv, 2));
+  geo.setIndex(g.i);
+  geometrias[k] = geo;
+}
+for (const inst of datos.instancias) {
+  const mesh = new THREE.Mesh(geometrias[inst.m], await material(inst.mat, inst.c));
+  mesh.matrixAutoUpdate = false;
+  mesh.matrix.fromArray(inst.M);
+  mesh.castShadow = inst.s === 1;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+const cam = datos.camara;
+const objetivo = new THREE.Vector3(...cam.t);
+for (const l of datos.luces) {
+  if (l.tipo === 'direccional') {
+    const luz = new THREE.DirectionalLight(l.c, l.i);
+    const d = new THREE.Vector3(...l.d).normalize();
+    luz.position.copy(objetivo).addScaledVector(d, -30);
+    luz.target.position.copy(objetivo);
+    scene.add(luz.target);
+    if (l.sombra) {
+      luz.castShadow = true;
+      luz.shadow.mapSize.set(4096, 4096);
+      Object.assign(luz.shadow.camera, { left: -11, right: 11, top: 11, bottom: -11, near: 1, far: 70 });
+      luz.shadow.bias = -0.0004;
+      luz.shadow.normalBias = 0.02;
+    }
+    scene.add(luz);
+  } else if (l.tipo === 'hemisferio') {
+    scene.add(new THREE.HemisphereLight(l.cielo, l.suelo, l.i));
+  } else if (l.tipo === 'punto') {
+    const luz = new THREE.PointLight(l.c, l.i * 2.5, l.r, 1.6);
+    luz.position.set(...l.p);
+    scene.add(luz);
+  }
+}
+const camara = new THREE.PerspectiveCamera(cam.fov, W / H, 0.3, 120);
+camara.position.set(...cam.p);
+camara.lookAt(objetivo);
+renderer.render(scene, camara);
+window.__listo = true;
+</script>
+</body>
+</html>

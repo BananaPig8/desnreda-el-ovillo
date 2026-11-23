@@ -40,7 +40,7 @@ namespace DesenredaElOvillo.Juego.Tres
                 case "casilla": Configurar(m, Textura(TexturasTres.Casilla()), 0f, 0.05f, 1f); break;
                 case "lana": Configurar(m, Textura(TexturasTres.Lana()), 0f, 0.12f, 1f); break;
                 case "madera": Configurar(m, Textura(TexturasTres.Madera()), 0f, 0.28f, 0.7f); break;
-                case "mesa": Configurar(m, Textura(TexturasTres.Madera()), 0f, 0.32f, 7f); break;
+                case "mesa": Configurar(m, Textura(TexturasTres.Madera()), 0f, 0.32f, 2.5f); break;
                 case "tela": Configurar(m, Textura(TexturasTres.Tela()), 0f, 0.12f, 1f); break;
                 case "velcro": Configurar(m, Textura(TexturasTres.Velcro()), 0f, 0.1f, 1f); break;
                 case "metal": Configurar(m, null, 0.85f, 0.62f, 1f); break;

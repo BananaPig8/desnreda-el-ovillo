@@ -1,0 +1,8 @@
+{
+  "name": "visor-desenreda-el-ovillo",
+  "private": true,
+  "description": "Visor three.js de las escenas exportadas por Tools/VistaPreviaArte",
+  "dependencies": {
+    "three": "0.170.0"
+  }
+}

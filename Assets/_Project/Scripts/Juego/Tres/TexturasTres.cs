@@ -128,17 +128,18 @@ namespace DesenredaElOvillo.Juego.Tres
         public static TexturaMaterial Madera() => Desde("madera", 256, 256,
             (u, v) =>
             {
-                float vetas = 0.5f + 0.5f * Mathf.Sin((v * 14f + RuidoPeriodico(u * 4, v * 8, 4, 31) * 3f) * Mathf.PI * 2f);
-                float poro = RuidoPeriodico(u * 64, v * 128, 64, 32);
-                return Mathf.Clamp01(vetas * 0.7f + poro * 0.3f);
+                float vetas = 0.5f + 0.5f * Mathf.Sin((v * 5f + RuidoPeriodico(u * 2, v * 4, 2, 31) * 0.8f) * Mathf.PI * 2f);
+                float poro = RuidoPeriodico(u * 32, v * 128, 32, 32);
+                float fibra = RuidoPeriodico(u * 4, v * 256, 4, 33);
+                return Mathf.Clamp01(vetas * 0.45f + poro * 0.3f + fibra * 0.25f);
             },
             (u, v, a) =>
             {
-                var claro = Paleta.Hex("#C08A55");
-                var oscuro = Paleta.Hex("#8E5A31");
+                var claro = Paleta.Hex("#B98352");
+                var oscuro = Paleta.Hex("#9A6538");
                 var c = Color.Lerp(oscuro, claro, a);
                 return new Color(c.r, c.g, c.b, 1f);
-            }, 3f, true);
+            }, 1.5f, true);
 
         /// <summary>Casilla del tablero: fieltro con un pespunte discontinuo de hilo claro cerca del borde.</summary>
         public static TexturaMaterial Casilla() => Desde("casilla", 256, 256,
@@ -161,12 +162,12 @@ namespace DesenredaElOvillo.Juego.Tres
         public static TexturaMaterial Tela() => Desde("tela", 128, 128,
             (u, v) =>
             {
-                float urdimbre = 0.5f + 0.5f * Mathf.Sin(u * 32 * Mathf.PI * 2f);
-                float trama = 0.5f + 0.5f * Mathf.Sin(v * 32 * Mathf.PI * 2f);
-                bool cruce = (Mathf.FloorToInt(u * 32) + Mathf.FloorToInt(v * 32)) % 2 == 0;
+                float urdimbre = 0.5f + 0.5f * Mathf.Sin(u * 16 * Mathf.PI * 2f);
+                float trama = 0.5f + 0.5f * Mathf.Sin(v * 16 * Mathf.PI * 2f);
+                bool cruce = (Mathf.FloorToInt(u * 16) + Mathf.FloorToInt(v * 16)) % 2 == 0;
                 return cruce ? urdimbre : trama;
             },
-            (u, v, a) => Gris(0.78f + a * 0.22f), 3f, true);
+            (u, v, a) => Gris(0.72f + a * 0.28f), 6f, true);
 
         public static TexturaMaterial Velcro() => Desde("velcro", 128, 128,
             (u, v) =>
