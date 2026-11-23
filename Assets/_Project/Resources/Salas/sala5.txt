@@ -1,0 +1,26 @@
+# Sala 5 — La Reina
+# Enseña: el jefe rompe la primera trampa que pisa (pon un señuelo), llama a su corte al perder vida
+# y, si llega al carrete, muerde y da otra vuelta: hay que derrotarla.
+id: sala5
+nombre: La Reina
+subtitulo: Jefa final
+objetivo: La Reina se come la primera casilla con herramientas que pisa: ponle un señuelo. Si llega al carrete, muerde y vuelve a empezar.
+hilo: 18
+longitud_minima: 10
+oleada: Comun@1, Reina@3, Comun@5
+tutorial: La Reina se come lo primero que encuentra en su camino. Sacrifica algo barato.
+tutorial: Cuando pierde vida llama a su corte: nuevas polillas entran por el agujero.
+solucion_recorrido: AAADDADDDDDBDBBB
+solucion_costurero: Alfiler, Velcro, Bobina, Alfiler, Tijeras, Boton, Alfiler, Velcro, Tijeras, Alfiler
+solucion_colocacion: Alfiler@1, Alfiler@2, Velcro@2, Alfiler@3, Velcro@3, Tijeras@4, Alfiler@5, Tijeras@7, Bobina@14, Boton@15
+solucion_mejoras: AlfileresAfilados, VelcroReforzado, AcericoLleno
+mapa:
+. . . . . . . . .
+. . . L . . . . .
+. . . . . . o . .
+. . u . . . . . .
+E . . . . . . . S
+. . . . . . u . .
+. . o . . . . . .
+. . . . . L . . .
+. . . . . . . . .

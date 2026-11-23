@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Laboratorio de balance: busca soluciones y mide la dificultad de cada sala con el núcleo real del juego. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Laboratorio</AssemblyName>
+    <RootNamespace>DesenredaElOvillo.Laboratorio</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nucleo/Nucleo.csproj" />
+  </ItemGroup>
+</Project>

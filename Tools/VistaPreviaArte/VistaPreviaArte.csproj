@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Renderiza a PNG el arte provisional generado por código (Assets/_Project/Scripts/Juego/Texturas.cs)
+    sin abrir Unity, usando una imitación mínima de UnityEngine (UnityMinimo.cs). Sirve para revisar el
+    aspecto de las piezas y para generar las capturas de la documentación.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>VistaPreviaArte</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Pintor.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Paleta.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Texturas.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nucleo/Nucleo.csproj" />
+  </ItemGroup>
+</Project>

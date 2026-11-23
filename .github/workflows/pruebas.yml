@@ -1,0 +1,19 @@
+name: Pruebas
+
+# Red de seguridad del proyecto: reglas del juego, balance de las salas y compilación de los scripts de Unity.
+on:
+  push:
+  pull_request:
+
+jobs:
+  nucleo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Pruebas del núcleo (las mismas que el Test Runner de Unity)
+        run: dotnet test Tools/Pruebas/Pruebas.csproj --nologo
+      - name: Compilar los scripts de Unity contra UnityEngine
+        run: dotnet build Tools/VerificacionUnity/VerificacionUnity.csproj --nologo

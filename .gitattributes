@@ -1,0 +1,30 @@
+# Normalización de finales de línea
+* text=auto
+
+# Archivos de Unity en YAML: se fusionan como texto
+*.unity    text eol=lf merge=unityyamlmerge
+*.prefab   text eol=lf merge=unityyamlmerge
+*.asset    text eol=lf merge=unityyamlmerge
+*.meta     text eol=lf
+*.mat      text eol=lf merge=unityyamlmerge
+*.anim     text eol=lf merge=unityyamlmerge
+*.controller text eol=lf merge=unityyamlmerge
+*.asmdef   text eol=lf
+*.cs       text diff=csharp
+*.txt      text eol=lf
+*.md       text
+
+# Binarios
+*.png binary
+*.jpg binary
+*.psd binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+
+# Cuando el arte crezca, conviene pasar los binarios a Git LFS (ver Docs/06_Arquitectura_tecnica.md):
+# *.png filter=lfs diff=lfs merge=lfs -text
+# *.psd filter=lfs diff=lfs merge=lfs -text
+# *.wav filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compila el núcleo de Assets/ como .NET Standard 2.1 (el perfil de API de Unity). -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>DesenredaElOvillo.Nucleo</AssemblyName>
+    <RootNamespace>DesenredaElOvillo.Nucleo</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Nucleo/**/*.cs" />
+  </ItemGroup>
+</Project>

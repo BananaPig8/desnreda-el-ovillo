@@ -1,0 +1,23 @@
+# Sala 4 — La última costura
+# Enseña: aprovechar el escenario (la lámpara deslumbra a todas las polillas una vez) en un taller estrecho.
+id: sala4
+nombre: La última costura
+subtitulo: Poco sitio, mucha polilla
+objetivo: El taller está lleno de trastos. La lámpara deslumbra a cada polilla la primera vez que pasa a su lado: haz que tu lana pase junto a ella.
+hilo: 16
+longitud_minima: 10
+oleada: Comun@1, Veloz@2, Comun@3, Acorazada@5, Veloz@6, Comun@8
+tutorial: La lámpara atrae a las polillas: la primera vez que una pasa a su lado se queda deslumbrada un turno. ¡También hace aterrizar a las veloces!
+solucion_recorrido: DDAADADDBDBBDD
+solucion_costurero: Alfiler, Velcro, Bobina, Alfiler, Tijeras, Boton, Alfiler, Velcro
+solucion_colocacion: Alfiler@1, Velcro@1, Boton@2, Alfiler@3, Velcro@3, Alfiler@5, Tijeras@6, Bobina@13
+mapa:
+. . # . . . # . .
+. . # . . . # . .
+. . . . L . . . .
+# # . # # # . # #
+E . . . . . . . S
+# # . # # # . # #
+. . . . . . . . .
+. . # . . . # . .
+. . # . . . # . .

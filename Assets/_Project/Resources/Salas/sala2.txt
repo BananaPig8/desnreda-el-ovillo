@@ -1,0 +1,26 @@
+# Sala 2 — El primer problema
+# Enseña: la polilla veloz solo toca el suelo al aterrizar (curvas) y la bobina la atrapa en vuelo.
+id: sala2
+nombre: El primer problema
+subtitulo: Llega la polilla veloz
+objetivo: La polilla veloz pasa volando por encima de las trampas. Obligala a aterrizar con curvas o atrápala con la bobina.
+hilo: 18
+longitud_minima: 10
+oferta_garantizada: Bobina
+oleada: Comun@1, Comun@3, Veloz@4, Comun@6
+tutorial: La polilla rosa vuela dos casillas por turno y solo toca el suelo donde aterriza.
+tutorial: No puede girar en el aire: en cada curva de la lana tiene que aterrizar. Las huellas te enseñan dónde.
+tutorial: La bobina la enreda incluso en pleno vuelo.
+solucion_recorrido: BDBIBBDDADAADADDDD
+solucion_costurero: Alfiler, Velcro, Bobina, Alfiler
+solucion_colocacion: Bobina@1, Alfiler@2, Alfiler@4, Velcro@4
+mapa:
+. . . . . . . . .
+. . . . . . . . .
+. . # # . . . . .
+. . . . . . o . .
+E . . . . . . . S
+. . o . . . . . .
+. . . . . . # # .
+. . . . . . . . .
+. . . . . . . . .

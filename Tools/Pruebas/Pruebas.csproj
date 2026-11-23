@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Ejecuta las mismas pruebas EditMode de Unity con "dotnet test" (útil en CI y sin abrir el editor). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <AssemblyName>DesenredaElOvillo.Pruebas</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Tests/EditMode/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nucleo/Nucleo.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- NUnit 3 (no 4): Unity Test Framework usa NUnit 3 y sus Assert clásicos. -->
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+  </ItemGroup>
+</Project>

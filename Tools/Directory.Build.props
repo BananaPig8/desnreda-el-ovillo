@@ -1,0 +1,11 @@
+<Project>
+  <!-- Mismo nivel de lenguaje que Unity 6 (C# 9) para que nada compile aquí y falle en el editor. -->
+  <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <RaizRepositorio>$(MSBuildThisFileDirectory)..\</RaizRepositorio>
+  </PropertyGroup>
+</Project>

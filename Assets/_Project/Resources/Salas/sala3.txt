@@ -1,0 +1,26 @@
+# Sala 3 — El taller se complica
+# Enseña: la acorazada aguanta mucho y su placa anula el primer control. Tijeras para el golpe fuerte,
+# botón saltarín para hacer repetir un tramo de trampas. Rodear la columna de carretes da más lana útil.
+id: sala3
+nombre: El taller se complica
+subtitulo: Llega la polilla acorazada
+objetivo: La acorazada tiene mucha vida y su placa anula el primer control que recibe. Gasta su placa con algo barato y guarda lo fuerte para después.
+hilo: 18
+longitud_minima: 10
+oferta_garantizada: Tijeras, Boton
+oleada: Comun@1, Veloz@2, Veloz@4, Acorazada@5
+tutorial: La polilla gris lleva una placa de fieltro: el primer velcro, bobina o botón que la toque solo le rompe la placa.
+tutorial: Las tijeras dan un corte enorme, pero solo una vez. El botón saltarín lanza a la polilla hacia atrás para que vuelva a pisar tus trampas.
+solucion_recorrido: BDAADBBBBDDDADADDA
+solucion_costurero: Alfiler, Velcro, Bobina, Alfiler, Tijeras, Boton
+solucion_colocacion: Alfiler@1, Boton@2, Bobina@3, Alfiler@4, Velcro@4, Tijeras@5
+mapa:
+. . . . . . . . .
+. # . . . . . # .
+. # . . c . . # .
+. . . . c . . . .
+E . . . . . . . S
+. . . . c . . . .
+. # . . c . . # .
+. # . . . . . # .
+. . . . . . . . .

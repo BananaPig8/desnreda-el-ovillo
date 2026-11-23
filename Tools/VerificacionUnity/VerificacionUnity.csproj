@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Comprueba que los scripts de Unity (Assets/_Project/Scripts/Juego) compilan sin abrir el editor,
+    usando ensamblados de referencia de UnityEngine (2021.3; la API que usamos es la misma en Unity 6).
+    No produce nada útil: solo sirve para detectar errores de compilación en CI.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>VerificacionUnity</AssemblyName>
+    <DefineConstants>$(DefineConstants);UNITY_5_3_OR_NEWER;UNITY_2021_3_OR_NEWER;ENABLE_LEGACY_INPUT_MANAGER;UNITY_STANDALONE</DefineConstants>
+    <NoWarn>$(NoWarn);CS0649;CS0414</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Nucleo/Nucleo.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" IncludeAssets="compile" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

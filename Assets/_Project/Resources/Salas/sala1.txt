@@ -1,0 +1,26 @@
+# Sala 1 — Primeros hilos (tutorial)
+# Enseña: tender la lana, colocar herramientas y el combo velcro + alfiler (concentrar el daño).
+id: sala1
+nombre: Primeros hilos
+subtitulo: Tutorial
+objetivo: Lleva la lana desde el agujero hasta el carrete y pega a las polillas encima del alfiler.
+hilo: 14
+longitud_minima: 6
+oferta_fija: Alfiler, Velcro
+oleada: Comun@1, Comun@3
+tutorial: Arrastra con el botón izquierdo desde el agujero del rodapié hasta el carrete para tender la lana.
+tutorial: Las polillas seguirán tu lana paso a paso. Cada casilla gasta una unidad de hilo.
+tutorial: Coloca el alfiler sobre la lana: pincha a la polilla que lo pisa.
+tutorial: Cose el velcro en la misma casilla: la polilla se quedará pegada… ¡encima del alfiler!
+tutorial: Pulsa ESPACIO para soltar a las polillas.
+solucion_recorrido: ADADDDDDBB
+solucion_costurero: Alfiler, Velcro
+solucion_colocacion: Alfiler@1, Velcro@1
+mapa:
+. . . . . . .
+. . . . . . .
+. . . u . . .
+E . . o . . S
+. . . . . . .
+. . . . . . .
+. . . . . . .
