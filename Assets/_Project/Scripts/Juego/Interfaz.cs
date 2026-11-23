@@ -306,6 +306,7 @@ namespace DesenredaElOvillo.Juego
             var p = C.Partida;
             if (p == null) return;
             DibujarTextosFlotantes();
+            DibujarPresentacion();
             DibujarBarraSuperior(p);
             DibujarCosturero(p);
             DibujarPanelOleada(p);
@@ -524,6 +525,26 @@ namespace DesenredaElOvillo.Juego
             }
         }
 
+        /// <summary>Rótulo del jefe: una etiqueta de fieltro que entra desde la izquierda con su retrato.</summary>
+        private void DibujarPresentacion()
+        {
+            var pr = C.Reproductor.Presentacion;
+            if (pr == null) return;
+            float edad = Time.time - pr.Inicio;
+            if (edad < 0f || edad > pr.Duracion) return;
+            float entra = Mathf.Clamp01(edad / 0.3f), sale = Mathf.Clamp01((pr.Duracion - edad) / 0.3f);
+            float k = Mathf.Min(1f - (1f - entra) * (1f - entra), sale);
+            var r = new Rect(Mathf.Lerp(-1100f, W / 2f - 540f, k), 196, 1080, 190);
+            var antes = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, Mathf.Clamp01(k * 1.5f));
+            Panel(r, _e.PanelLogo);
+            var retrato = Iconos.Retrato(pr.Retrato);
+            if (retrato != null) GUI.DrawTexture(new Rect(r.x + 24, r.y + 10, 170, 170), retrato, ScaleMode.ScaleToFit);
+            GUI.Label(new Rect(r.x + 210, r.y + 26, r.width - 240, 70), pr.Titulo, _e.Logo2);
+            GUI.Label(new Rect(r.x + 214, r.y + 110, r.width - 240, 60), pr.Subtitulo, _e.LemaLogo);
+            GUI.color = antes;
+        }
+
         // ================================================================== ventanas
 
         private void DibujarEleccion(Partida p)
@@ -676,7 +697,7 @@ namespace DesenredaElOvillo.Juego
         {
             public readonly GUIStyle Panel, PanelOscuro, PanelLogo, Tarjeta, TarjetaMarcada;
             public readonly GUIStyle Boton, BotonSecundario, BotonGrande, Interruptor;
-            public readonly GUIStyle Logo, LemaLogo, Titulo, TituloClaro, Subtitulo, Subtitulo2, SubtituloClaro;
+            public readonly GUIStyle Logo, Logo2, LemaLogo, Titulo, TituloClaro, Subtitulo, Subtitulo2, SubtituloClaro;
             public readonly GUIStyle Texto, TextoGrande, TextoNegrita, TextoCentrado, TextoCentradoClaro, TextoPequeno, TextoPequenoCentrado, TextoPequenoClaro, TextoMini;
             public readonly GUIStyle Contador, Tecla, Marca, Flotante;
 
@@ -714,6 +735,8 @@ namespace DesenredaElOvillo.Juego
 
                 Logo = TextoBase(88, ciruela, FontStyle.Bold, TextAnchor.UpperLeft);
                 Logo.wordWrap = false;
+                Logo2 = TextoBase(62, ciruela, FontStyle.Bold, TextAnchor.UpperLeft);
+                Logo2.wordWrap = false;
                 LemaLogo = TextoBase(22, Paleta.MarronCalido, FontStyle.Italic, TextAnchor.UpperLeft);
                 Titulo = TextoBase(54, ciruela, FontStyle.Bold, TextAnchor.UpperCenter);
                 TituloClaro = TextoBase(40, Paleta.Crema, FontStyle.Bold, TextAnchor.UpperCenter);

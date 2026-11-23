@@ -143,6 +143,164 @@ namespace DesenredaElOvillo.Juego.Tres
         }
 
         /// <summary>
+        /// Capa de pelusa: la malla desplazada a lo largo de sus normales. En las esferas las UV se rehacen con una
+        /// proyección octaédrica de la normal (sin polos pellizcados e igual en todas las capas, así cada fibra
+        /// atraviesa varias capas y forma un mechón) y se descartan los triángulos que cruzan un pliegue de la
+        /// proyección (solo hay en la mitad de abajo, que no se ve). En tubos y cajas se usan sus propias UV
+        /// escaladas ("escalaUvPropia"). Si "despejar" tiene valor, se quitan los triángulos que miran hacia esa
+        /// dirección: así la pelusa no tapa la cara.
+        /// </summary>
+        public static DatosMalla Capa(DatosMalla origen, float desplazamiento, float repeticionUv, Vector3? despejar = null, float cosenoDespejado = 0.7f, Vector2? escalaUvPropia = null)
+        {
+            var m = new DatosMalla();
+            var uvBase = new Vector2[origen.Vertices.Count];
+            for (int i = 0; i < origen.Vertices.Count; i++)
+            {
+                var n = origen.Normales[i];
+                Vector2 uv;
+                if (escalaUvPropia.HasValue)
+                {
+                    uvBase[i] = Vector2.zero;
+                    uv = new Vector2(origen.Uvs[i].x * escalaUvPropia.Value.x, origen.Uvs[i].y * escalaUvPropia.Value.y);
+                }
+                else
+                {
+                    uvBase[i] = Octaedro(n);
+                    uv = uvBase[i] * repeticionUv;
+                }
+                m.Agregar(origen.Vertices[i] + n * desplazamiento, n, uv);
+            }
+            for (int t = 0; t + 2 < origen.Triangulos.Count; t += 3)
+            {
+                int a = origen.Triangulos[t], b = origen.Triangulos[t + 1], c = origen.Triangulos[t + 2];
+                float du = Mathf.Max(Mathf.Abs(uvBase[a].x - uvBase[b].x), Mathf.Max(Mathf.Abs(uvBase[a].x - uvBase[c].x), Mathf.Abs(uvBase[b].x - uvBase[c].x)));
+                float dv = Mathf.Max(Mathf.Abs(uvBase[a].y - uvBase[b].y), Mathf.Max(Mathf.Abs(uvBase[a].y - uvBase[c].y), Mathf.Abs(uvBase[b].y - uvBase[c].y)));
+                if (du > 0.25f || dv > 0.25f) continue;
+                if (despejar.HasValue)
+                {
+                    var n = origen.Normales[a] + origen.Normales[b] + origen.Normales[c];
+                    if (n.sqrMagnitude > 1e-8f && Vector3.Dot(n.normalized, despejar.Value) > cosenoDespejado) continue;
+                }
+                m.Triangulos.Add(a);
+                m.Triangulos.Add(b);
+                m.Triangulos.Add(c);
+            }
+            return m;
+        }
+
+        /// <summary>Proyección octaédrica de una dirección a [0,1]² (el hemisferio superior ocupa el rombo central, sin costuras).</summary>
+        public static Vector2 Octaedro(Vector3 n)
+        {
+            float s = Mathf.Abs(n.x) + Mathf.Abs(n.y) + Mathf.Abs(n.z);
+            if (s < 1e-6f) return new Vector2(0.5f, 0.5f);
+            float x = n.x / s, z = n.z / s;
+            if (n.y < 0f)
+            {
+                float ox = (1f - Mathf.Abs(z)) * (x >= 0f ? 1f : -1f);
+                float oz = (1f - Mathf.Abs(x)) * (z >= 0f ? 1f : -1f);
+                x = ox;
+                z = oz;
+            }
+            return new Vector2(x * 0.5f + 0.5f, z * 0.5f + 0.5f);
+        }
+
+        /// <summary>Semiesfera inferior (y ≤ 0) con tapa plana arriba: vista de frente es una "D" tumbada (boca abierta).</summary>
+        public static DatosMalla Semiesfera(float radio = 0.5f, int segmentos = 16)
+        {
+            var m = Superficie(segmentos * 2, segmentos / 2,
+                (u, v) => PuntoEsfera(u, v * 0.5f) * radio,
+                (u, v) => PuntoEsfera(u, v * 0.5f),
+                (u, v) => new Vector2(u * 2f, v * 0.5f));
+            Tapa(m, radio, 0f, Vector3.up, segmentos * 2);
+            return m;
+        }
+
+        /// <summary>Hebras por haz en los ovillos: van de cuatro en cuatro, paralelas, como al enrollar un ovillo de verdad.</summary>
+        public const int HebrasPorHaz = 4;
+
+        /// <summary>
+        /// Ovillo de hebras: haces de cuatro vueltas paralelas de lana gruesa (tubos retorcidos) enrollados alrededor
+        /// de una esfera. Cada haz cruza a los demás en otra dirección (espiral de Fibonacci con algo de azar) y va
+        /// un poco más alto que el anterior, así se montan unos sobre otros como en un ovillo bien enrollado.
+        /// Una ondulación suave evita que se vea demasiado perfecto. Todo en una sola malla.
+        /// </summary>
+        public static DatosMalla OvilloDeHebras(int hebras, float radio, float grosor, int semilla, int muestras = 44, int segmentos = 8)
+        {
+            var m = new DatosMalla();
+            var azar = new System.Random(semilla);
+            float R(float a, float b) => a + (float)azar.NextDouble() * (b - a);
+            // torsión de los cabos: una vuelta de los tres cabos cada ~6 grosores (cuerda gruesa, no espiga)
+            float uvPorUnidad = 0.16f / grosor;
+            int haces = Mathf.Max(1, hebras / HebrasPorHaz);
+            var puntos = new List<Vector3>(muestras + 1);
+            for (int k = 0; k < haces; k++)
+            {
+                float t = (k + 0.5f) / haces;
+                float polar = Mathf.Acos(1f - 2f * t), acimut = k * 2.39996f + 0.6f;
+                var eje = new Vector3(Mathf.Sin(polar) * Mathf.Cos(acimut), Mathf.Cos(polar), Mathf.Sin(polar) * Mathf.Sin(acimut));
+                eje = (eje + new Vector3(R(-0.2f, 0.2f), R(-0.2f, 0.2f), R(-0.2f, 0.2f))).normalized;
+                var a = Vector3.Cross(eje, Mathf.Abs(eje.y) < 0.9f ? Vector3.up : Vector3.right).normalized;
+                var b = Vector3.Cross(eje, a).normalized;
+                float r = radio + grosor * (0.3f + 0.9f * k / Mathf.Max(1, haces - 1));
+                int ondas = 2 + azar.Next(2);
+                float amplitud = R(0.02f, 0.05f), fase = R(0f, Mathf.PI * 2f);
+                for (int j = 0; j < HebrasPorHaz; j++)
+                {
+                    // vueltas paralelas, una junto a otra: círculos menores de la esfera a distinta altura sobre el eje
+                    float h = (j - (HebrasPorHaz - 1) * 0.5f) * grosor * 2.05f;
+                    float anillo = Mathf.Sqrt(Mathf.Max(0.01f, r * r - h * h));
+                    puntos.Clear();
+                    for (int i = 0; i <= muestras; i++)
+                    {
+                        float ang = i * Mathf.PI * 2f / muestras;
+                        float onda = amplitud * r * Mathf.Sin(ondas * ang + fase);
+                        var p = (a * Mathf.Cos(ang) + b * Mathf.Sin(ang)) * anillo + eje * (h + onda);
+                        puntos.Add(p.normalized * r);
+                    }
+                    Tubo(puntos, grosor, segmentos, uvPorUnidad, false, m);
+                }
+            }
+            return m;
+        }
+
+        /// <summary>Anillo de tubo (la bufanda alrededor del cuello), con UV de tubo: U alrededor, V a lo largo.</summary>
+        public static DatosMalla Anillo(float radioMayor, float radioMenor, float uvPorUnidad = 3.6f, int muestras = 64, int segmentos = 14)
+        {
+            var puntos = new List<Vector3>(muestras + 1);
+            for (int i = 0; i <= muestras; i++)
+            {
+                float a = i * Mathf.PI * 2f / muestras;
+                puntos.Add(new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radioMayor);
+            }
+            return Tubo(puntos, radioMenor, segmentos, uvPorUnidad, false);
+        }
+
+        /// <summary>Tira colgante (punta de la bufanda): un tubo que baja curvándose un poco hacia atrás.</summary>
+        public static DatosMalla Colgante(float largo, float radio, float uvPorUnidad = 3.6f, int muestras = 10, int segmentos = 12)
+        {
+            var puntos = new List<Vector3>(muestras + 1);
+            for (int i = 0; i <= muestras; i++)
+            {
+                float t = i / (float)muestras;
+                puntos.Add(new Vector3(0f, -t * largo, Mathf.Sin(t * Mathf.PI * 0.5f) * largo * 0.18f));
+            }
+            return Tubo(puntos, radio, segmentos, uvPorUnidad, true);
+        }
+
+        /// <summary>Plano horizontal (XZ) centrado, mirando hacia arriba (sombras de contacto).</summary>
+        public static DatosMalla Plano(float ancho, float fondo)
+        {
+            var m = new DatosMalla();
+            float a = ancho / 2f, f = fondo / 2f;
+            int v0 = m.Agregar(new Vector3(-a, 0, -f), Vector3.up, new Vector2(0, 0));
+            int v1 = m.Agregar(new Vector3(a, 0, -f), Vector3.up, new Vector2(1, 0));
+            int v2 = m.Agregar(new Vector3(a, 0, f), Vector3.up, new Vector2(1, 1));
+            int v3 = m.Agregar(new Vector3(-a, 0, f), Vector3.up, new Vector2(0, 1));
+            m.Quad(v0, v1, v2, v3, Vector3.up);
+            return m;
+        }
+
+        /// <summary>
         /// Caja con aristas redondeadas (aspecto acolchado). Las muestras se concentran en los bordes para que
         /// el redondeo sea suave con pocos vértices. UV 0..1 en cada cara.
         /// </summary>
@@ -216,9 +374,9 @@ namespace DesenredaElOvillo.Juego.Tres
         /// de golpe en las curvas; V avanza con la longitud (la textura helicoidal da la torsión) y U rodea el tubo.
         /// Extremos redondeados con media esfera.
         /// </summary>
-        public static DatosMalla Tubo(IList<Vector3> puntos, float radio, int segmentos = 14, float uvPorUnidad = 2.5f, bool extremos = true)
+        public static DatosMalla Tubo(IList<Vector3> puntos, float radio, int segmentos = 14, float uvPorUnidad = 2.5f, bool extremos = true, DatosMalla destino = null)
         {
-            var m = new DatosMalla();
+            var m = destino ?? new DatosMalla();
             int n = puntos.Count;
             if (n < 2) return m;
             var tangentes = new Vector3[n];

@@ -70,7 +70,10 @@ El orden exacto de resolución de un turno está documentado en `02_Reglas_del_j
 
 ## 6.5 Presentación 3D
 
-- **Prototipo sin modelos externos:** toda la geometría es procedural (`Mallas`: esferas, toros, cilindros, cajas acolchadas y el tubo de lana con transporte paralelo y remates). Los modelos se describen como **árboles de piezas** (`Modelos`) con malla, material, color, transformación y **grupo de animación**. `Constructor` los convierte en GameObjects; el mismo árbol se exporta a la vista previa.
+- **Prototipo sin modelos externos:** toda la geometría es procedural (`Mallas`: esferas, semiesferas, toros, cilindros, cajas acolchadas, el tubo de lana con transporte paralelo y remates, los **ovillos de hebras** —haces de cuatro vueltas de tubo que se cruzan— y los tubos de la bufanda). Los modelos se describen como **árboles de piezas** (`Modelos`) con malla, material, color, transformación, **grupo de animación**, capas de pelusa, sombra de contacto y si empiezan ocultas (expresiones alternativas). `Constructor` los convierte en GameObjects; el mismo árbol se exporta a la vista previa.
+- **Mallas por clave:** `CatalogoMallas` genera y cachea cada malla a partir de una clave de texto (`"caja:0.92,0.16,0.92,0.05"`, `"hebras:24,0.3,0.045,7"`…). La pelusa es otra clave compuesta (`"hebras:…|pelusa:2"`): la misma malla inflada a lo largo de sus normales con UV de fibras. Así Unity y la vista previa usan exactamente la misma geometría.
+- **Pelusa y sombras de contacto:** capas con recorte alfa (material `pelusa`, umbral por capa con `MaterialPropertyBlock`) y manchas de sombra con el shader de sprites (`SombraDinamica` las mantiene en el suelo cuando el personaje salta o vuela). Las plantillas `Pelusa` y `Sombra` de `Resources/Materiales` meten esos shaders y variantes en la build.
+- **Expresiones como datos:** `Modelos.Rasgos(Expresion)` dice qué grupos se ven (ojo abierto, párpado, "^", "&gt;", bocas) y a qué escala; `VistaOvillo` lo aplica en el juego y la vista previa lo aplica a la descripción del modelo para dibujar la hoja de expresiones.
 - **Sustitución por arte final:** basta con instanciar un FBX en lugar del árbol de piezas, manteniendo los nombres de grupo (ver `04_Direccion_de_arte.md`, 4.9).
 - **Materiales:** `Materiales` usa **URP/Lit** si el proyecto tiene URP y **Standard** si no; texturas procedurales con mapa de normales; color por objeto con `MaterialPropertyBlock` (una textura sirve para todo el fieltro). Para las builds, el editor crea plantillas en `Resources/Materiales` que garantizan la inclusión del shader y sus variantes.
 - **Cámara:** proyección perspectiva descentrada que coloca el tablero exactamente en la zona libre de la interfaz; la entrada del ratón se resuelve con un rayo contra el plano de las casillas (sin colliders).
@@ -98,7 +101,8 @@ IMGUI escalado desde 1920×1080 para el prototipo (robusto, sin dependencias de 
 
 ## 6.9 Rendimiento (objetivo: 60 fps en un portátil de feria con gráfica integrada reciente)
 
-- Escena pequeña: ~90 casillas (malla compartida), < 300 renderers en el peor momento, 1 luz con sombras + 2 lámparas sin sombras.
+- Escena pequeña: ~90 casillas (malla compartida, cada una con una capa de pelusa), < 500 renderers en el peor momento, 1 luz con sombras + 2 lámparas sin sombras.
+- Prototipo procedural: Ovillo ~15.000 triángulos de hebras + 2 capas de pelusa (~46.000 en total); cada polilla ~6.000 + 2 capas (~17.000). En el peor momento (Reina + 6 polillas) son unos 300.000 triángulos: holgado para cualquier gráfica de los últimos años, pero **el arte final debe bajar** a ≤ 8.000 triángulos por personaje con la pelusa en el shader *Textil*.
 - Personajes finales ≤ 8.000 triángulos; texturas ≤ 1024².
 - Presupuesto: < 400 draw calls (sin SRP Batcher por los `MaterialPropertyBlock`; si hiciera falta, pasar a materiales por color o a GPU instancing).
 - La lana se regenera solo al tejer (unos pocos miles de vértices).

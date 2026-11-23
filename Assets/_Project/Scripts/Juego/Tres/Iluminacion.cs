@@ -27,7 +27,7 @@ namespace DesenredaElOvillo.Juego.Tres
         {
             foreach (var luz in FindLuces()) if (luz.type == LightType.Directional) luz.enabled = false;
 
-            _principal = NuevaLuz("Luz de la ventana", LightType.Directional, Paleta.Hex("#FFE6C4"), 1.25f);
+            _principal = NuevaLuz("Luz de la ventana", LightType.Directional, Paleta.Hex("#FFDFB4"), 1.3f);
             _principal.transform.rotation = Quaternion.Euler(52f, -35f, 0f);
             _principal.shadows = LightShadows.Soft;
             _principal.shadowStrength = 0.72f;
@@ -39,7 +39,7 @@ namespace DesenredaElOvillo.Juego.Tres
             _relleno.shadows = LightShadows.None;
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = Paleta.Hex("#E9D6BC");
+            RenderSettings.ambientSkyColor = Paleta.Hex("#F0D8B2");
             RenderSettings.ambientEquatorColor = Paleta.Hex("#B39477");
             RenderSettings.ambientGroundColor = Paleta.Hex("#5A3A24");
             RenderSettings.fog = true;

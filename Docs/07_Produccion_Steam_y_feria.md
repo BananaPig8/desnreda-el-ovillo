@@ -4,10 +4,10 @@
 
 | Hito | Contenido | Duración estimada | Estado |
 |---|---|---|---|
-| **M0 · Prototipo jugable** | Reglas, 5 salas equilibradas, prototipo 3D procedural, pruebas, laboratorio | — | ✅ hecho (pendiente de la primera prueba en el editor) |
+| **M0 · Prototipo jugable** | Reglas, 5 salas equilibradas, prototipo 3D procedural (Ovillo según su hoja, con 8 expresiones y sus animaciones; polillas de hebras; pelusa; presentación de la Reina), pruebas, laboratorio | — | ✅ hecho (pendiente de la primera prueba en el editor) |
 | **M1 · Primera partida en Unity** | Abrir con la plantilla URP, jugar las 5 salas, corregir lo que solo se ve dentro del editor, primeras 5 pruebas con jugadores | 1–2 semanas | siguiente |
 | **M2 · Arte núcleo** | Shader *Textil*, Ovillo y polilla común finales, tablero final | 4–5 semanas | |
-| **M3 · Vertical slice** | Resto de personajes, herramientas y decorado finales; UI Toolkit; música y efectos; presentación de la Reina | 6–8 semanas | |
+| **M3 · Vertical slice** | Resto de personajes, herramientas y decorado finales; UI Toolkit; música y efectos; clips finales de la presentación de la Reina | 6–8 semanas | |
 | **M4 · Build de feria** | Pulido, 15–20 pruebas con jugadores, ajustes de balance, modo feria, página de Steam con lista de deseados | 2–3 semanas | |
 | **M5 · Juego completo** | 3–4 biomas del taller (25–35 salas), 8–10 herramientas, 8 polillas, desbloqueos ligeros entre partidas | 9–15 meses | |
 

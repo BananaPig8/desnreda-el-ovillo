@@ -21,6 +21,10 @@ namespace DesenredaElOvillo.Juego
         private float _sacudida;
         private float _zoom = 1f, _zoomObjetivo = 1f;
         private float _giro, _giroObjetivo;
+        // enfoque temporal (presentación de la Reina): mezcla 0 = vista normal, 1 = acercada al punto
+        private bool _enfocando;
+        private Vector3 _puntoFoco;
+        private float _acercamiento = 1f, _mezclaFoco;
 
         public float Inclinacion = 55f;
         public float CampoDeVision = 30f;
@@ -57,6 +61,20 @@ namespace DesenredaElOvillo.Juego
             if (_instancia != null) _instancia._sacudida = Mathf.Max(_instancia._sacudida, intensidad);
         }
 
+        /// <summary>Acerca la cámara a un punto (presentaciones). acercamiento &lt; 1 acerca.</summary>
+        public static void Enfocar(Vector3 punto, float acercamiento)
+        {
+            if (_instancia == null) return;
+            _instancia._enfocando = true;
+            _instancia._puntoFoco = punto;
+            _instancia._acercamiento = acercamiento;
+        }
+
+        public static void SoltarEnfoque()
+        {
+            if (_instancia != null) _instancia._enfocando = false;
+        }
+
         public static float EscalaInterfaz => Mathf.Min(Screen.width / AnchoReferencia, Screen.height / AltoReferencia);
         public static Vector2 DesplazamientoInterfaz => new Vector2((Screen.width - AnchoReferencia * EscalaInterfaz) / 2f, (Screen.height - AltoReferencia * EscalaInterfaz) / 2f);
 
@@ -80,6 +98,8 @@ namespace DesenredaElOvillo.Juego
         {
             _zoom = Mathf.Lerp(_zoom, _zoomObjetivo, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 10f));
             _giro = Mathf.Lerp(_giro, _giroObjetivo, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 8f));
+            _mezclaFoco = Mathf.MoveTowards(_mezclaFoco, _enfocando ? 1f : 0f, Time.unscaledDeltaTime * 2.2f);
+            float foco = Mathf.SmoothStep(0f, 1f, _mezclaFoco);
 
             float s = EscalaInterfaz;
             var d = DesplazamientoInterfaz;
@@ -103,8 +123,9 @@ namespace DesenredaElOvillo.Juego
                 if (Cabe(dist, adelante, derecha, arriba, tanY, aspecto, zonaW, zonaH)) hi = dist;
                 else lo = dist;
             }
-            float distancia = hi * _zoom;
-            var pos = _mundo.center - adelante * distancia;
+            float distancia = hi * _zoom * Mathf.Lerp(1f, _acercamiento, foco);
+            var centro = Vector3.Lerp(_mundo.center, _puntoFoco, foco);
+            var pos = centro - adelante * distancia;
             if (_sacudida > 0)
             {
                 _sacudida -= Time.unscaledDeltaTime;

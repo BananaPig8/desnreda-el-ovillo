@@ -47,14 +47,30 @@ const defs = {
   lana: { t: 'lana', rep: 1, s: 0.12, m: 0 }, madera: { t: 'madera', rep: 0.7, s: 0.28, m: 0 },
   mesa: { t: 'madera', rep: 7, s: 0.32, m: 0 }, tela: { t: 'tela', rep: 1, s: 0.12, m: 0 },
   velcro: { t: 'velcro', rep: 1, s: 0.1, m: 0 }, metal: { s: 0.62, m: 0.85 }, oro: { s: 0.55, m: 0.9 },
-  boton: { t: 'fieltro', rep: 0.25, s: 0.42, m: 0 }, brillante: { s: 0.86, m: 0 }, emisivo: { s: 0.3, m: 0, e: true }
+  boton: { t: 'fieltro', rep: 0.25, s: 0.42, m: 0 }, brillante: { s: 0.86, m: 0 }, emisivo: { s: 0.3, m: 0, e: true },
+  pelusa: { t: 'pelusa', rep: 1, s: 0.04, m: 0, recorte: true }, sombra: { t: 'sombra_contacto', sombra: true },
+  punto: { t: 'punto', rep: 1, s: 0.08, m: 0 }
 };
 const materiales = {};
-async function material(id, c) {
-  const clave = id + c.join(',');
+async function material(id, c, corte, opacidad) {
+  const clave = id + c.join(',') + '|' + corte + '|' + opacidad;
   if (materiales[clave]) return materiales[clave];
   const d = defs[id] || defs.fieltro;
+  if (d.sombra) {
+    // sombra de contacto: mancha negra con transparencia, sin escribir profundidad (como Sprites/Default en Unity)
+    const map = await tex(d.t, 1, true);
+    map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
+    return (materiales[clave] = new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, opacity: opacidad ?? 1 }));
+  }
   const color = new THREE.Color().setRGB(c[0], c[1], c[2], THREE.SRGBColorSpace);
+  if (d.recorte) {
+    // capa de pelusa: recorte alfa con el umbral de la capa (las exteriores conservan solo las fibras más altas)
+    const map = await tex(d.t, d.rep, true);
+    // ?pelusa=0 la oculta y ?pelusa=capas la pinta por capas (rojo, verde, azul) para revisarla
+    if (q.get('pelusa') === '0') return (materiales[clave] = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    if (q.get('pelusa') === 'capas') return (materiales[clave] = new THREE.MeshBasicMaterial({ color: corte < 0.8 ? 0xff0000 : corte < 0.9 ? 0x00ff00 : 0x0000ff, map, alphaTest: corte }));
+    return (materiales[clave] = new THREE.MeshStandardMaterial({ color, map, alphaTest: corte, roughness: 1 - d.s, metalness: 0 }));
+  }
   const p = { color, roughness: 1 - d.s, metalness: d.m };
   if (d.t) { p.map = await tex(d.t, d.rep, true); p.normalMap = await tex(d.t + '_n', d.rep, false); }
   if (d.e) { p.emissive = color.clone().multiplyScalar(2.2); }
@@ -70,11 +86,11 @@ for (const [k, g] of Object.entries(datos.mallas)) {
   geometrias[k] = geo;
 }
 for (const inst of datos.instancias) {
-  const mesh = new THREE.Mesh(geometrias[inst.m], await material(inst.mat, inst.c));
+  const mesh = new THREE.Mesh(geometrias[inst.m], await material(inst.mat, inst.c, inst.a, inst.o));
   mesh.matrixAutoUpdate = false;
   mesh.matrix.fromArray(inst.M);
   mesh.castShadow = inst.s === 1;
-  mesh.receiveShadow = true;
+  mesh.receiveShadow = inst.mat !== 'sombra';
   scene.add(mesh);
 }
 const cam = datos.camara;

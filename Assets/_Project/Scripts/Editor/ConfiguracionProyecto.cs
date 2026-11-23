@@ -57,7 +57,8 @@ namespace DesenredaElOvillo.Editor
 
         /// <summary>
         /// Plantillas de material en Resources: garantizan que el shader iluminado del pipeline activo y sus
-        /// variantes (mapa de normales, emisión) entran en la build, aunque los materiales se creen por código.
+        /// variantes (mapa de normales, emisión, recorte de la pelusa) y el de las sombras de contacto entran
+        /// en la build, aunque los materiales se creen por código.
         /// </summary>
         [MenuItem("Desenreda el Ovillo/Regenerar plantillas de material", priority = 21)]
         public static void AsegurarPlantillasDeMaterial()
@@ -72,6 +73,18 @@ namespace DesenredaElOvillo.Editor
                 m.EnableKeyword("_EMISSION");
                 m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
             });
+            CrearPlantilla("Pelusa", shader, m =>
+            {
+                m.EnableKeyword("_NORMALMAP");
+                if (m.HasProperty("_AlphaClip")) m.SetFloat("_AlphaClip", 1f);
+                if (m.HasProperty("_Mode")) m.SetFloat("_Mode", 1f);
+                if (m.HasProperty("_Cutoff")) m.SetFloat("_Cutoff", 0.5f);
+                m.SetOverrideTag("RenderType", "TransparentCutout");
+                m.EnableKeyword("_ALPHATEST_ON");
+                m.renderQueue = (int)RenderQueue.AlphaTest;
+            });
+            var sprites = Shader.Find("Sprites/Default");
+            if (sprites != null) CrearPlantilla("Sombra", sprites, m => { });
         }
 
         private static void CrearPlantilla(string nombre, Shader shader, Action<Material> configurar)

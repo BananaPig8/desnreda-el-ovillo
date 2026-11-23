@@ -51,21 +51,46 @@ public sealed class Escena3D
         return r;
     }
 
-    public void Agregar(Pieza p, Vector3 posicion, float giroY = 0f, float escala = 1f)
+    /// <param name="sueloSombra">Si tiene valor, la sombra de contacto de la raíz se pega a esa altura (polillas sobre la lana o en vuelo).</param>
+    public void Agregar(Pieza p, Vector3 posicion, float giroY = 0f, float escala = 1f, float? sueloSombra = null)
     {
         var baseM = Trs(posicion, Quaternion.Euler(0, giroY, 0), Vector3.one * escala);
-        Recorrer(p, baseM);
+        bool sombraFuera = sueloSombra.HasValue && p.Sombra.x > 0f;
+        if (sombraFuera)
+            SombraEn(Trs(new Vector3(posicion.x, sueloSombra.Value + 0.004f, posicion.z), Quaternion.Euler(0, giroY, 0), new Vector3(p.Sombra.x * escala, 1f, p.Sombra.y * escala)));
+        Recorrer(p, baseM, sombraFuera);
     }
 
-    private void Recorrer(Pieza p, float[] padre)
+    private void Recorrer(Pieza p, float[] padre, bool sinSombra = false)
     {
+        if (p.Oculta) return;
         var m = Mul(padre, Trs(p.Posicion, Quaternion.Euler(p.Rotacion), p.Escala));
         if (!string.IsNullOrEmpty(p.Malla))
         {
-            if (!_mallas.ContainsKey(p.Malla)) _mallas[p.Malla] = CatalogoMallas.Obtener(p.Malla);
+            Registrar(p.Malla);
             Instancia(p.Malla, m, p.Material, p.Color, p.ProyectaSombra);
+            // capas de pelusa, igual que Constructor.CrearPelusa
+            for (int k = 1; k <= p.Pelusa; k++)
+            {
+                string clave = CapasPelusa.Malla(p.Malla, k, p.CaraLibre);
+                Registrar(clave);
+                Instancia(clave, m, "pelusa", CapasPelusa.Tono(p.Color, k), false, CapasPelusa.Corte(k));
+            }
         }
+        if (!sinSombra && p.Sombra.x > 0f) SombraEn(Mul(m, Trs(new Vector3(0, 0.004f, 0), Quaternion.identity, new Vector3(p.Sombra.x, 1f, p.Sombra.y))));
         foreach (var h in p.Hijos) Recorrer(h, m);
+    }
+
+    private void Registrar(string clave)
+    {
+        if (!_mallas.ContainsKey(clave)) _mallas[clave] = CatalogoMallas.Obtener(clave);
+    }
+
+    private void SombraEn(float[] m)
+    {
+        string clave = CatalogoMallas.Plano(1f, 1f);
+        Registrar(clave);
+        Instancia(clave, m, "sombra", new Color(0, 0, 0, 1), false, -1f, Medidas.OpacidadSombra);
     }
 
     public void AgregarMalla(string clave, DatosMalla d, string material, Color color)
@@ -74,7 +99,7 @@ public sealed class Escena3D
         Instancia(clave, Identidad(), material, color, true);
     }
 
-    private void Instancia(string malla, float[] m, string material, Color c, bool sombra)
+    private void Instancia(string malla, float[] m, string material, Color c, bool sombra, float corte = -1f, float opacidad = 1f)
     {
         // M_three = S * M * S con S = diag(1, 1, -1, 1); three.js lee las matrices por columnas.
         var s = (float[])m.Clone();
@@ -85,8 +110,10 @@ public sealed class Escena3D
                 col.Append(F(s[i * 4 + j])).Append(i == 3 && j == 3 ? "" : ",");
         if (_cuenta++ > 0) _instancias.Append(",\n");
         _instancias.Append("{\"m\":\"").Append(malla).Append("\",\"mat\":\"").Append(material).Append("\",\"c\":[")
-            .Append(F(c.r)).Append(',').Append(F(c.g)).Append(',').Append(F(c.b)).Append("],\"s\":").Append(sombra ? "1" : "0")
-            .Append(",\"M\":[").Append(col).Append("]}");
+            .Append(F(c.r)).Append(',').Append(F(c.g)).Append(',').Append(F(c.b)).Append("],\"s\":").Append(sombra ? "1" : "0");
+        if (corte >= 0f) _instancias.Append(",\"a\":").Append(F(corte));
+        if (opacidad < 1f) _instancias.Append(",\"o\":").Append(F(opacidad));
+        _instancias.Append(",\"M\":[").Append(col).Append("]}");
     }
 
     public void Luz(string json) => _luces.Add(json);
@@ -133,7 +160,7 @@ public static class Exportar3D
     }
 
     /// <summary>Réplica de VistaTablero.Construir + lana + herramientas + algunas polillas en pleno recorrido.</summary>
-    public static Escena3D Sala(Sala sala, IList<(TipoPolilla tipo, int indice, bool vuela)> polillas)
+    public static Escena3D Sala(Sala sala, IList<(TipoPolilla tipo, int indice, bool vuela)> polillas, float tejido = 1f)
     {
         var e = new Escena3D();
         var t = sala.Tablero;
@@ -147,7 +174,7 @@ public static class Exportar3D
                 var c = new Celda(x, y);
                 float variacion = Pintor.Ruido(x * 1.7f, y * 1.3f, 12);
                 var color = Color.Lerp(Paleta.Musgo, Paleta.MusgoClaro, variacion * 0.45f + ((x + y) % 2) * 0.08f);
-                e.Agregar(new Pieza { Malla = casilla, Material = "casilla", Color = color }, new Vector3(x + 0.5f, Medidas.AlturaCasilla / 2f, y + 0.5f), (variacion - 0.5f) * 3f);
+                e.Agregar(new Pieza { Malla = casilla, Material = "casilla", Color = color, Pelusa = 1 }, new Vector3(x + 0.5f, Medidas.AlturaCasilla / 2f, y + 0.5f), (variacion - 0.5f) * 3f);
                 float giro = (Pintor.Ruido(x * 3.1f, y * 2.7f, 5) - 0.5f) * 40f;
                 switch (t.Tipo(c))
                 {
@@ -169,6 +196,19 @@ public static class Exportar3D
             var r = Recorrido.DesdeMovimientos(t, sala.Solucion.Movimientos);
             var centros = new List<Vector3>();
             foreach (var c in r.Celdas) centros.Add(new Vector3(c.X + 0.5f, Medidas.AlturaLana, c.Y + 0.5f));
+            if (tejido < 1f)
+            {
+                // a medio tejer: sin herramientas ni polillas, con el ovillito rodando en la punta
+                int n = Math.Max(2, (int)Math.Round(centros.Count * tejido));
+                centros.RemoveRange(n, centros.Count - n);
+                e.AgregarMalla("lana_recorrido", Mallas.Tubo(Mallas.CaminoSuave(centros), Medidas.RadioLana, 14, 2.5f), "lana", Paleta.ColoresLana[0]);
+                float restante = 1f - (float)(n - 1) / sala.Hilo;
+                float radio = Medidas.RadioOvillito(restante);
+                var dir = (centros[n - 1] - centros[n - 2]).normalized;
+                e.Agregar(Modelos.OvilloDeTrabajo(Paleta.ColoresLana[0]), Medidas.PosicionOvillito(centros[n - 1], dir, radio), 35f, radio * 2f);
+                LucesYCamara(e, new Vector3(w / 2f + 0.6f, 0.35f, h / 2f - 0.1f), Math.Max(w, h) + 0.4f, 52f, 28f);
+                return e;
+            }
             e.AgregarMalla("lana_recorrido", Mallas.Tubo(Mallas.CaminoSuave(centros), Medidas.RadioLana, 14, 2.5f), "lana", Paleta.ColoresLana[0]);
             var reglas = Reglas.PorDefecto();
             foreach (var col in sala.Solucion.Colocaciones)
@@ -191,7 +231,7 @@ public static class Exportar3D
                 var dir = new Vector3(sig.X - c.X, 0, sig.Y - c.Y);
                 float giro = dir.sqrMagnitude > 0 ? Mathf.Atan2(-dir.x, -dir.z) * Mathf.Rad2Deg * 0.5f : 0f;
                 var pos = new Vector3(c.X + 0.5f, Medidas.AlturaPolilla + (p.vuela ? 0.42f : 0f), c.Y + 0.5f);
-                e.Agregar(Modelos.Polilla(p.tipo), pos, giro);
+                e.Agregar(Modelos.Polilla(p.tipo), pos, giro, 1f, Medidas.AlturaCasilla);
             }
         }
         LucesYCamara(e, new Vector3(w / 2f + 0.6f, 0.35f, h / 2f - 0.1f), Math.Max(w, h) + 0.4f, 52f, 28f);
@@ -214,6 +254,66 @@ public static class Exportar3D
         e.Agregar(Modelos.BotonSuelto(Paleta.Mostaza, 0.3f), new Vector3(0.9f, -0.08f, -1.6f), 20f);
         e.Agregar(Modelos.BotonSuelto(Paleta.RosaPastel, 0.22f), new Vector3(-1.2f, -0.08f, -1.7f), 50f);
         LucesYCamara(e, new Vector3(0, 0.62f, 0.1f), 4.4f, 16f, 22f);
+        return e;
+    }
+
+    /// <summary>Hoja de expresiones: las seis caras de Ovillo y la polilla común normal, pegada y derrotada.</summary>
+    public static Escena3D Expresiones()
+    {
+        var e = new Escena3D();
+        e.Agregar(new Pieza { Malla = CatalogoMallas.Caja(30f, 0.5f, 20f, 0.08f), Material = "mesa", Color = Color.white }, new Vector3(0, -0.33f, 3f));
+        e.Agregar(new Pieza { Malla = CatalogoMallas.Caja(12.6f, 0.08f, 3.6f, 0.04f), Material = "fieltro", Color = Paleta.Hex("#7E9A4A") }, new Vector3(0, -0.04f, 0.4f));
+        var caras = new[] { Expresion.Normal, Expresion.Feliz, Expresion.Guino, Expresion.Preocupado, Expresion.Susto, Expresion.Triste, Expresion.Dolor, Expresion.Euforia };
+        for (int i = 0; i < caras.Length; i++)
+        {
+            var o = Modelos.Ovillo();
+            Modelos.AplicarCara(o, Modelos.Rasgos(caras[i]));
+            e.Agregar(o, new Vector3(-5.25f + i * 1.5f, 0f, -0.2f), 0f, 1.3f);
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            var p = Modelos.Polilla(TipoPolilla.Comun);
+            Modelos.AplicarCaraPolilla(p, i == 1 ? 0.4f : 0f, i == 2);
+            e.Agregar(p, new Vector3(-1.5f + i * 1.5f, 0f, 1.5f), 0f, 1.3f);
+        }
+        LucesYCamara(e, new Vector3(0, 0.5f, 0.6f), 5.6f, 30f, 22f);
+        return e;
+    }
+
+    /// <summary>Retrato de Ovillo como en su hoja: de tres cuartos, saludando con un bracito, sobre fieltro verde.</summary>
+    public static Escena3D Retrato(Expresion cara = Expresion.Normal, float alzarIzq = 1f, float alzarDer = 0f, float giro = 22f)
+    {
+        var e = new Escena3D();
+        e.Agregar(new Pieza { Malla = CatalogoMallas.Caja(30f, 0.5f, 20f, 0.08f), Material = "mesa", Color = Color.white }, new Vector3(0, -0.33f, 3f));
+        var cesped = new Pieza { Malla = CatalogoMallas.Caja(4.5f, 0.08f, 3.2f, 0.04f), Material = "casilla", Color = Paleta.Hex("#7E9A4A"), Pelusa = 1 };
+        e.Agregar(cesped, new Vector3(0, -0.04f, 0.6f));
+        var o = Modelos.Ovillo();
+        Modelos.AplicarCara(o, Modelos.Rasgos(cara));
+        Posar(o, "brazo_izq", alzarIzq);
+        Posar(o, "brazo_der", alzarDer);
+        e.Agregar(o, new Vector3(0f, 0f, 0f), giro, 1.3f);
+        e.Agregar(Modelos.BobinaGrande(Paleta.AzulSuave), new Vector3(-1.6f, -0.08f, 2.6f), 30f);
+        e.Agregar(Modelos.OvilloSuelto(Paleta.Morado), new Vector3(1.9f, -0.08f, 2.3f), 0f);
+        LucesYCamara(e, new Vector3(0, 0.55f, 0f), 1.55f, 12f, 24f);
+        return e;
+    }
+
+    /// <summary>Alza un bracito en la descripción del modelo (igual que VistaOvillo.PonerBrazo con alzar = 1).</summary>
+    private static void Posar(Pieza p, string grupo, float alzar)
+    {
+        if (p.Grupo == grupo)
+        {
+            float lado = grupo.EndsWith("_izq") ? -1f : 1f;
+            p.Rotacion = new Vector3(0, 0, lado * 48f * (alzar >= 0f ? 1f - 2f * alzar : 1f + alzar));
+            p.Posicion += new Vector3(lado * 0.03f * Mathf.Max(0f, alzar), 0.13f * Mathf.Max(0f, alzar), 0f);
+        }
+        foreach (var h in p.Hijos) Posar(h, grupo, alzar);
+    }
+
+    /// <summary>Tejiendo: la lana a medio camino, con el ovillito en la punta (más pequeño cuanto menos hilo queda).</summary>
+    public static Escena3D Tejiendo(Sala sala, float fraccion)
+    {
+        var e = Sala(sala, new (TipoPolilla, int, bool)[0], fraccion);
         return e;
     }
 

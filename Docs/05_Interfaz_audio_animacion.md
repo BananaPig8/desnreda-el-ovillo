@@ -25,6 +25,8 @@ La interfaz se diseña a 1920×1080 y se escala con bandas a cualquier resoluci�
 - **Consejos contextuales:** en la sala 1 el consejo cambia según el paso del tutorial; en las demás muestra el objetivo de la sala.
 - **"Antes de empezar":** explica en una frase por qué aún no se puede soltar a las polillas (lana incompleta, demasiado corta, sin hilo…).
 - **Durante la oleada:** botones de velocidad ×1/×2/×4 (Espacio también cambia), turno actual y polillas en el taller; textos flotantes sobre el tablero ("-2", "¡Pegada!", "¡Enredada!", "¡Placa rota!", "¡Ñam!", "¡Boing!").
+- **Presentación del jefe:** cuando entra la Reina, la cámara se acerca al agujero, la Reina crece con un rebote enorme y despliega las alas, entra desde la izquierda un **rótulo de fieltro** con su retrato ("La Reina Polilla — Se come tus trampas · Llama a su corte · Da otra vuelta si muerde"), ruge ("¡Este taller es mío!"), la maqueta tiembla y Ovillo se asusta. Dura unos 3 s y a ×4 se acorta, pero nunca por debajo de lo necesario para leer el rótulo.
+- **Sala superada:** confeti de fieltro desde el carrete. **Victoria final:** Ovillo celebra con ojos "&gt; &lt;" y una lluvia de confeti.
 
 ## 5.2 Pantallas
 
@@ -36,7 +38,7 @@ La interfaz se diseña a 1920×1080 y se escala con bandas a cualquier resoluci�
 | Elección de herramientas | Tres tarjetas cosidas; se marcan dos; "¡Al costurero!". |
 | Recompensa | "¡Sala superada!" y tres mejoras. |
 | Victoria | Ovillo celebrando, estadísticas e **invitación a la lista de deseados** (la URL se pone en `Configuracion.UrlSteam`). |
-| Derrota | Las polillas devoran el carrete (en el tablero), estadísticas, "Volver a intentarlo" y "Menú principal". |
+| Derrota | Las polillas devoran el carrete a mordiscos (el hilo adelgaza en cada uno) mientras Ovillo corre asustado; estadísticas, "Volver a intentarlo" y "Menú principal". |
 | Pausa | Continuar, Cómo jugar, Ajustes, Abandonar partida. |
 
 No hay tienda, perfiles, multijugador ni monedas, como pedía la propuesta.
@@ -88,11 +90,27 @@ Principio: **pocas animaciones, muy expresivas**, con *squash and stretch* y air
 
 | Personaje | Imprescindibles para la feria | Deseables |
 |---|---|---|
-| Ovillo | Idle/respirar, parpadeo, susto, saltito, celebrar, tristeza | Caminar, correr, tropezar, mirar a las polillas (ya está en el prototipo) |
-| Común | Idle, trotar, daño, pegada, enredada, morir | Escapar con el botín |
+| Ovillo | Idle/respirar, parpadeo, llegar andando, susto, dolor (mordisco), saltito, guiño, celebrar, tristeza | Correr asustado, tropezar, mirar a las polillas, preocuparse si se acercan (**todo ya está en el prototipo**, con las 8 expresiones de su hoja) |
+| Común | Idle, trotar, daño (ojos apretados), pegada (ojos entornados), enredada, morir (ojos en X) | Escapar con el botín |
 | Veloz | Vuelo, aterrizaje, daño, morir | Atrapada en el aire |
 | Acorazada | Caminar pesado, daño, **perder la placa**, morir | Resistir con orgullo |
 | Reina | **Presentación**, caminar, **comer herramienta**, **llamar a su corte**, daño, derrota | Dar otra vuelta con enfado |
 | Herramientas | Alfiler pincha, tijeras cortan, botón rebota, bobina gira, velcro se aplasta | — |
 
-El prototipo ya tiene versiones procedurales de casi todas (ver `VistaPolilla.cs`, `VistaOvillo.cs`, `VistaHerramientas.cs`); los clips finales las sustituirán una a una.
+El prototipo ya tiene versiones procedurales de casi todas (ver `VistaPolilla.cs`, `VistaOvillo.cs`, `VistaHerramientas.cs`, `ReproductorOleada.cs`); los clips finales las sustituirán una a una.
+
+### Ovillo en el prototipo (qué hace y cuándo)
+
+| Momento | Animación | Cara |
+|---|---|---|
+| Empieza una sala | Llega andando desde fuera del tablero (pasos alternos, balanceo, bracitos); en las salas pares **tropieza** con su hebra, cae de morros y se levanta | Normal → Sorprendido → Herido → Normal |
+| Preparación | Respira, parpadea, la punta de la bufanda se mece | Normal |
+| La lana llega al carrete | Saltito | **Guiño** |
+| Polilla cerca del carrete | La mira y tiembla un poco | Preocupado |
+| Cae una polilla | Saltito con los bracitos arriba | Feliz |
+| Muerden el carrete | Se encoge hacia atrás, se pone colorado un instante | **Herido** ("&gt; &lt;") |
+| Entra la Reina | Respingo | Sorprendido |
+| Derrota | **Corre** de un lado a otro con los brazos en alto (la bufanda ondea) y luego se queda abatido | Sorprendido → Triste |
+| Victoria final | Saltos con vueltas, bracitos arriba y confeti | **¡Euforia!** |
+
+Todo se anima a **12 poses por segundo** (aire de *stop motion*). Las polillas parpadean a su ritmo, aprietan los ojos con cada golpe y ponen ojos en X al caer; su sombra de contacto se queda en la casilla cuando vuelan.

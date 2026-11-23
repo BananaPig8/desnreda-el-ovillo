@@ -32,6 +32,7 @@ namespace DesenredaElOvillo.Juego
         public static Vector3 Mundo(Celda c) => new Vector3(c.X + 0.5f, Medidas.AlturaCasilla, c.Y + 0.5f);
 
         public Vector3 PosicionCarrete => Tablero == null ? Vector3.zero : Mundo(Tablero.Salida) + Vector3.up * 0.45f;
+        public Vector3 FueraSalida => Tablero == null ? Vector3.right : DireccionFuera(Tablero, Tablero.Salida);
         public Vector3 PosicionEntrada => Tablero == null ? Vector3.zero : Mundo(Tablero.Entrada);
 
         /// <summary>Volumen que la cámara debe encuadrar (tablero + Ovillo + la altura de los objetos).</summary>
@@ -88,7 +89,7 @@ namespace DesenredaElOvillo.Juego
                     int i = y * w + x;
                     float variacion = Pintor.Ruido(x * 1.7f, y * 1.3f, 12);
                     var color = Color.Lerp(Paleta.Musgo, Paleta.MusgoClaro, variacion * 0.45f + ((x + y) % 2) * 0.08f);
-                    var casilla = Instanciar(new Pieza { Nombre = "Casilla " + c, Malla = mallaCasilla, Material = "casilla", Color = color },
+                    var casilla = Instanciar(new Pieza { Nombre = "Casilla " + c, Malla = mallaCasilla, Material = "casilla", Color = color, Pelusa = 1 },
                         new Vector3(x + 0.5f, Medidas.AlturaCasilla / 2f, y + 0.5f));
                     casilla.transform.localRotation = Quaternion.Euler(0, (variacion - 0.5f) * 3f, 0);
                     _casillas[i] = casilla.transform;
@@ -117,7 +118,7 @@ namespace DesenredaElOvillo.Juego
             ActualizarCarrete(vida, vidaMaxima, false);
 
             var fueraSalida = DireccionFuera(tablero, tablero.Salida);
-            Ovillo = VistaOvillo.Crear(transform, Mundo(tablero.Salida) + fueraSalida * 1.05f + Vector3.back * 0.25f - Vector3.up * (Medidas.AlturaCasilla + 0.08f));
+            Ovillo = VistaOvillo.Crear(transform, Mundo(tablero.Salida) + fueraSalida * 1.05f + Vector3.back * 0.25f - Vector3.up * (Medidas.AlturaCasilla + 0.08f), fueraSalida);
             _objetos.Add(Ovillo.gameObject);
 
             foreach (var d in Decorado.Disponer(w, h, 7))
@@ -155,7 +156,7 @@ namespace DesenredaElOvillo.Juego
             if (golpe)
             {
                 _temblorCarrete = 0.45f;
-                if (Ovillo != null) Ovillo.Asustar(0.9f);
+                if (Ovillo != null) Ovillo.Herir();
             }
         }
 
@@ -167,6 +168,7 @@ namespace DesenredaElOvillo.Juego
 
         public void Asustar(float s) { if (Ovillo != null) Ovillo.Asustar(s); }
         public void Saltar(float s) { if (Ovillo != null) Ovillo.Saltar(s); }
+        public void Panico(float s) { if (Ovillo != null) Ovillo.Panico(s); }
 
         private void Update()
         {

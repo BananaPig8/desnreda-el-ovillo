@@ -17,6 +17,16 @@ namespace DesenredaElOvillo.Juego
         public float Tamano = 30;
     }
 
+    /// <summary>Rótulo de presentación de un jefe (lo dibuja la Interfaz mientras dura).</summary>
+    public sealed class Presentacion
+    {
+        public string Titulo;
+        public string Subtitulo;
+        public string Retrato;
+        public float Inicio;
+        public float Duracion;
+    }
+
     /// <summary>
     /// Reproduce una oleada: ejecuta la simulación turno a turno y traduce cada evento en animación, sonido y texto.
     /// La lógica ya está decidida por el núcleo; aquí solo se cuenta lo que pasó, con ritmo y claridad.
@@ -33,6 +43,8 @@ namespace DesenredaElOvillo.Juego
         private Transform _contenedor;
 
         public readonly List<TextoFlotante> Textos = new List<TextoFlotante>();
+        /// <summary>Rótulo de jefe en pantalla (null si no hay).</summary>
+        public Presentacion Presentacion { get; private set; }
         public bool EnCurso { get; private set; }
         public int TurnoActual => _sim == null ? 0 : _sim.Turno;
         public int VidaCarreteMostrada { get; private set; }
@@ -81,6 +93,7 @@ namespace DesenredaElOvillo.Juego
             {
                 _tablero.Saltar(1.6f);
                 Sonidos.Tocar(Sonido.Victoria);
+                Confeti.Lanzar(_tablero.PosicionCarrete + Vector3.up * 0.5f, 28, Tres.Medidas.AlturaCasilla, 0.8f);
                 Flotar(_tablero.PosicionCarrete + Vector3.up * 0.8f, "¡Sala superada!", Paleta.Crema, 1.8f, 44);
                 yield return Esperar(1.4f);
             }
@@ -126,10 +139,14 @@ namespace DesenredaElOvillo.Juego
                 {
                     var nueva = VistaPolilla.Crear(_contenedor, e.PolillaId, e.TipoPolilla, Pos(0));
                     _polillas[e.PolillaId] = nueva;
+                    if (e.TipoPolilla == TipoPolilla.Reina && e.Tipo == TipoEvento.Aparece)
+                    {
+                        yield return PresentarReina(nueva);
+                        break;
+                    }
                     Sonidos.Tocar(e.TipoPolilla == TipoPolilla.Reina ? Sonido.Reina : Sonido.Aparece);
-                    if (e.TipoPolilla == TipoPolilla.Reina) Flotar(Pos(0) + Vector3.up * 1.1f, "¡La Reina!", Paleta.Dorado, 1.6f, 40);
                     if (e.Tipo == TipoEvento.Invocada) Flotar(Pos(0) + Vector3.up * 0.9f, "¡Refuerzos!", Paleta.RosaPastel);
-                    yield return nueva.Aparecer(D(e.TipoPolilla == TipoPolilla.Reina ? 0.6f : 0.25f));
+                    yield return nueva.Aparecer(D(0.25f));
                     break;
                 }
                 case TipoEvento.Sobrevuela:
@@ -267,11 +284,45 @@ namespace DesenredaElOvillo.Juego
             }
         }
 
-        /// <summary>Derrota: las polillas que quedan se lanzan a por el carrete y se lo comen.</summary>
+        /// <summary>
+        /// Presentación del jefe: la cámara se acerca al agujero, la Reina crece con un rebote enorme, despliega
+        /// las alas, aparece su rótulo y suelta un rugido que hace temblar la maqueta (y a Ovillo).
+        /// A ×4 se acorta, pero nunca por debajo de lo necesario para leer el rótulo.
+        /// </summary>
+        private IEnumerator PresentarReina(VistaPolilla reina)
+        {
+            float ritmo = Mathf.Min(Velocidad, 2f);
+            float S(float s) => s / ritmo;
+            Sonidos.Tocar(Sonido.Reina);
+            CamaraJuego.Enfocar(Pos(0) + Vector3.up * 0.4f, 0.6f);
+            Presentacion = new Presentacion
+            {
+                Titulo = "La Reina Polilla",
+                Subtitulo = "Se come tus trampas · Llama a su corte · Da otra vuelta si muerde",
+                Retrato = "reina",
+                Inicio = Time.time + S(0.35f),
+                Duracion = S(2.6f)
+            };
+            yield return reina.Aparecer(S(0.9f));
+            reina.Volando = true;
+            yield return new WaitForSeconds(S(0.5f));
+            reina.Volando = false;
+            Sonidos.Tocar(Sonido.Reina, 1f, 0.8f);
+            CamaraJuego.Sacudir(0.3f);
+            _tablero.Asustar(0.9f);
+            Flotar(Pos(0) + Vector3.up * 1.2f, "¡Este taller es mío!", Paleta.Dorado, 1.6f, 38);
+            yield return reina.Aplastar(S(0.25f));
+            yield return new WaitForSeconds(S(1.1f));
+            CamaraJuego.SoltarEnfoque();
+            yield return new WaitForSeconds(S(0.45f));
+        }
+
+        /// <summary>Derrota: las polillas que quedan se lanzan a por el carrete y se lo comen a mordiscos mientras Ovillo corre.</summary>
         private IEnumerator Devorar()
         {
             Sonidos.Tocar(Sonido.Derrota);
-            _tablero.Asustar(2f);
+            _tablero.Panico(1.2f + VidaCarreteMostrada * 0.32f);
+            var comensales = new List<VistaPolilla>();
             int k = 0;
             foreach (var v in _polillas.Values)
             {
@@ -279,14 +330,21 @@ namespace DesenredaElOvillo.Juego
                 var destino = _tablero.PosicionCarrete + new Vector3(Mathf.Cos(k * 2.1f) * 0.35f, Mathf.Sin(k * 2.1f) * 0.3f, 0);
                 v.Volando = true;
                 StartCoroutine(v.Mover(destino, 0.6f, false));
+                comensales.Add(v);
                 k++;
             }
+            yield return new WaitForSeconds(0.55f);
             Flotar(_tablero.PosicionCarrete + Vector3.up * 1.1f, "¡Ñam, ñam, ñam!", Paleta.RosaPastel, 2f, 40);
-            for (int i = VidaCarreteMostrada; i >= 0; i--)
+            var hilo = new[] { Paleta.Bufanda, Paleta.BufandaSombra };
+            for (int i = VidaCarreteMostrada; i > 0; i--)
             {
-                _tablero.ActualizarCarrete(0, _vidaMaxima, true);
+                // el hilo del carrete adelgaza mordisco a mordisco
+                _tablero.ActualizarCarrete(i - 1, _vidaMaxima, false);
+                foreach (var v in comensales) if (v != null) StartCoroutine(v.Masticar(0.24f));
+                Pelusa.Soltar(_tablero.PosicionCarrete + Vector3.up * 0.15f, 4, hilo);
                 Sonidos.Tocar(Sonido.Mordisco, 0.7f, 1f + i * 0.05f);
-                yield return new WaitForSeconds(0.25f);
+                CamaraJuego.Sacudir(0.12f);
+                yield return new WaitForSeconds(0.32f);
             }
             yield return new WaitForSeconds(0.8f);
         }
@@ -317,6 +375,8 @@ namespace DesenredaElOvillo.Juego
         public void Limpiar()
         {
             StopAllCoroutines();
+            CamaraJuego.SoltarEnfoque();
+            Presentacion = null;
             EnCurso = false;
             _polillas.Clear();
             Textos.Clear();

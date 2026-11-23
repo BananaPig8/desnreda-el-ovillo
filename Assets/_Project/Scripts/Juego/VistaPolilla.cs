@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using DesenredaElOvillo.Juego.Tres;
 using DesenredaElOvillo.Nucleo;
 using UnityEngine;
@@ -6,9 +7,10 @@ using UnityEngine;
 namespace DesenredaElOvillo.Juego
 {
     /// <summary>
-    /// Una polilla 3D: cuerpo de lana, alas de fieltro que baten, patitas que trotan y una cara expresiva.
-    /// Mira a medias hacia donde avanza y a medias hacia la cámara (para que siempre se le vea la cara).
-    /// No sabe nada de reglas: el ReproductorOleada le dice qué animar.
+    /// Una polilla 3D: cuerpo de lana, alas de fieltro que baten, patitas que trotan y una cara expresiva
+    /// (parpadea, aprieta los ojos al recibir un golpe, los entorna pegada o enredada, los cierra deslumbrada
+    /// y pone ojos en X al caer). Mira a medias hacia donde avanza y a medias hacia la cámara (para que
+    /// siempre se le vea la cara). No sabe nada de reglas: el ReproductorOleada le dice qué animar.
     /// </summary>
     public sealed class VistaPolilla : MonoBehaviour
     {
@@ -19,6 +21,11 @@ namespace DesenredaElOvillo.Juego
         private Vector3 _cuerpoBase;
         private GameObject _enredo, _pegote, _estrellas;
         private float _aleteo = 1f, _temblor, _giro, _giroObjetivo;
+        private readonly List<Transform> _parpados = new List<Transform>();
+        private List<Transform> _ojos, _ojosX;
+        private float _siguienteParpadeo, _golpeHasta, _parpadoAplicado = -1f;
+        private bool _pegada, _enredada, _deslumbrada, _caida;
+        private SombraDinamica _sombra;
 
         public int Id { get; private set; }
         public TipoPolilla Tipo { get; private set; }
@@ -41,6 +48,11 @@ namespace DesenredaElOvillo.Juego
             if (v._alaIzq != null) v._alaIzqBase = v._alaIzq.localRotation;
             if (v._alaDer != null) v._alaDerBase = v._alaDer.localRotation;
             if (v._cuerpo != null) v._cuerpoBase = v._cuerpo.localPosition;
+            v._parpados.AddRange(v._modelo.Grupo("parpados"));
+            v._ojos = v._modelo.Grupo("ojos");
+            v._ojosX = v._modelo.Grupo("ojos_x");
+            v._siguienteParpadeo = Time.time + Random.Range(0.6f, 3f);
+            v._sombra = SombraDinamica.Agregar(v._modelo.Sombra, go.transform, Medidas.AlturaCasilla, Medidas.AlturaPolilla);
             v._enredo = v.Adorno(new Pieza { Nombre = "Enredo", Malla = CatalogoMallas.Toro(0.24f, 0.025f), Material = "lana", Color = Paleta.Mostaza, Posicion = new Vector3(0, 0.24f, 0), Rotacion = new Vector3(70, 0, 20) });
             v._pegote = v.Adorno(new Pieza { Nombre = "Velcro pegado", Malla = CatalogoMallas.Caja(0.4f, 0.03f, 0.4f, 0.015f), Material = "velcro", Color = Paleta.Hex("#6C8FB5"), Posicion = new Vector3(0, 0.0f, 0) });
             var estrellas = new Pieza { Nombre = "Estrellas" };
@@ -92,6 +104,35 @@ namespace DesenredaElOvillo.Juego
             transform.rotation = Quaternion.Euler(0, _giro, 0);
             if (_enredo != null && _enredo.activeSelf) _enredo.transform.Rotate(0, 90 * Time.deltaTime, 0, Space.World);
             if (_estrellas != null && _estrellas.activeSelf) _estrellas.transform.Rotate(0, 200 * Time.deltaTime, 0, Space.World);
+            if (_sombra != null) _sombra.Extra = Volando ? bote : 0f;
+            ActualizarParpados();
+        }
+
+        /// <summary>Párpados: 0 abiertos, 1 cerrados. El estado (pegada, enredada, deslumbrada) manda sobre el parpadeo.</summary>
+        private void ActualizarParpados()
+        {
+            float t = Time.time;
+            float parpado = _deslumbrada ? 1f : _enredada ? 0.5f : _pegada ? 0.35f : 0f;
+            if (t < _golpeHasta) parpado = Mathf.Max(parpado, 0.8f);
+            if (t > _siguienteParpadeo + 0.11f) _siguienteParpadeo = t + Random.Range(2.2f, 4.8f);
+            else if (t > _siguienteParpadeo) parpado = 1f;
+            if (_caida) parpado = 0f;
+            if (Mathf.Abs(parpado - _parpadoAplicado) < 0.01f) return;
+            _parpadoAplicado = parpado;
+            foreach (var p in _parpados)
+            {
+                bool visible = parpado > 0.02f;
+                if (p.gameObject.activeSelf != visible) p.gameObject.SetActive(visible);
+                if (visible) p.localScale = new Vector3(1f, parpado, 1f);
+            }
+        }
+
+        private void PonerOjosEnX()
+        {
+            _caida = true;
+            foreach (var o in _ojos) o.gameObject.SetActive(false);
+            foreach (var o in _ojosX) o.gameObject.SetActive(true);
+            ActualizarParpados();
         }
 
         // ------------------------------------------------------------------ animaciones
@@ -155,6 +196,7 @@ namespace DesenredaElOvillo.Juego
         public IEnumerator Golpe(float d)
         {
             _temblor = d;
+            _golpeHasta = Time.time + Mathf.Max(d, 0.18f);
             _modelo.Destello(Paleta.Hex("#FF5A4A"), 0.6f);
             yield return Aplastar(d);
             _modelo.Destello(Color.white, 0f);
@@ -163,6 +205,7 @@ namespace DesenredaElOvillo.Juego
         public IEnumerator Morir(float d)
         {
             Volando = false;
+            PonerOjosEnX();
             var inicial = transform.localScale;
             for (float e = 0; e < d; e += Time.deltaTime)
             {
@@ -199,17 +242,28 @@ namespace DesenredaElOvillo.Juego
         {
             if (_pegote != null) _pegote.SetActive(activo);
             _aleteo = activo ? 0.2f : 1f;
+            _pegada = activo;
         }
 
         public void Enredada(bool activo)
         {
             if (_enredo != null) _enredo.SetActive(activo);
             Volando = false;
+            _enredada = activo;
         }
 
         public void Deslumbrada(bool activo)
         {
             if (_estrellas != null) _estrellas.SetActive(activo);
+            _deslumbrada = activo;
+        }
+
+        /// <summary>Mordisquitos al carrete (derrota): dos aplastones rápidos con los ojos apretados.</summary>
+        public IEnumerator Masticar(float d)
+        {
+            _golpeHasta = Time.time + d;
+            yield return Aplastar(d * 0.5f);
+            yield return Aplastar(d * 0.5f);
         }
 
         public void Temblar(float segundos) => _temblor = segundos;
@@ -235,35 +289,6 @@ namespace DesenredaElOvillo.Juego
             if (x <= 0) return 0;
             if (x >= 1) return 1;
             return Mathf.Pow(2, -10 * x) * Mathf.Sin((x * 10 - 0.75f) * (2 * Mathf.PI / 3)) + 1;
-        }
-    }
-
-    /// <summary>Bolitas de fieltro que saltan al derrotar a una polilla o romper una placa (partículas baratas).</summary>
-    public sealed class Pelusa : MonoBehaviour
-    {
-        private Vector3 _velocidad;
-        private float _vida;
-
-        public static void Soltar(Vector3 origen, int cantidad)
-        {
-            var colores = new[] { Paleta.Crema, Paleta.RosaPastel, Paleta.Morado, Paleta.Mostaza };
-            for (int i = 0; i < cantidad; i++)
-            {
-                var m = Constructor.Instanciar(new Pieza { Nombre = "Pelusa", Malla = "esfera_baja", Material = "lana", Color = colores[i % colores.Length], Escala = Vector3.one * Random.Range(0.05f, 0.09f), ProyectaSombra = false }, null);
-                m.Raiz.position = origen;
-                var p = m.Raiz.gameObject.AddComponent<Pelusa>();
-                p._velocidad = new Vector3(Random.Range(-1.6f, 1.6f), Random.Range(1.5f, 3f), Random.Range(-1.6f, 1.6f));
-                p._vida = Random.Range(0.6f, 0.9f);
-            }
-        }
-
-        private void Update()
-        {
-            _vida -= Time.deltaTime;
-            _velocidad += Vector3.down * 7f * Time.deltaTime;
-            transform.position += _velocidad * Time.deltaTime;
-            transform.localScale *= 1f - Time.deltaTime * 0.8f;
-            if (_vida <= 0) Destroy(gameObject);
         }
     }
 }

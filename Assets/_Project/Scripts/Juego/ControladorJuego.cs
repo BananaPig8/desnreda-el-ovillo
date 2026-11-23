@@ -195,6 +195,8 @@ namespace DesenredaElOvillo.Juego
             Tablero.Construir(sala.Tablero, Partida.VidaCarrete, ReglasBase.VidaCarreteMaxima);
             Camara.Encuadrar(Tablero.Encuadre, ZonaTablero);
             Camara.ReiniciarVista();
+            // Ovillo llega andando a su puesto; en las salas pares (la primera vez) tropieza con su propia hebra
+            if (Tablero.Ovillo != null) Tablero.Ovillo.Entrar(Tablero.FueraSalida, !conservarLana && Partida.NumeroSala % 2 == 0);
             if (!conservarLana || Recorrido == null || Recorrido.Tablero != sala.Tablero)
             {
                 Recorrido = new Recorrido(sala.Tablero);
@@ -477,6 +479,7 @@ namespace DesenredaElOvillo.Juego
                 if (res == ResultadoPaso.Completado)
                 {
                     Sonidos.Tocar(Sonido.Colocar);
+                    if (Tablero.Ovillo != null) Tablero.Ovillo.Guinar(1.4f);
                     _tejiendo = false;
                     AvisarConMensaje("¡La lana llega al carrete! Ahora coloca tus herramientas.");
                     break;
@@ -538,7 +541,8 @@ namespace DesenredaElOvillo.Juego
 
         private void RedibujarLana()
         {
-            Lana.Dibujar(Recorrido);
+            float restante = Partida == null || Partida.HiloDisponible <= 0 ? 1f : 1f - (float)Recorrido.HiloUsado / Partida.HiloDisponible;
+            Lana.Dibujar(Recorrido, restante);
             bool hayVeloces = Partida != null && Partida.SalaActual.Oleada.Contar(TipoPolilla.Veloz) > 0;
             Lana.MostrarHuellas(Recorrido, hayVeloces && Recorrido.EstaCompleto
                 ? SimuladorOleada.PrevisualizarAterrizajes(Recorrido, Partida.Reglas)

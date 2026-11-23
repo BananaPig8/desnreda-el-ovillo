@@ -6,8 +6,9 @@ using UnityEngine.Rendering.Universal;
 namespace DesenredaElOvillo.Juego.Tres
 {
     /// <summary>
-    /// Acabado de maqueta con el postproceso de URP (solo se compila si el paquete URP está instalado):
-    /// desenfoque del fondo (sensación de miniatura), bloom suave para la lámpara, viñeta y gradación cálida.
+    /// Acabado de maqueta con el postproceso de URP (solo se compila si el paquete URP está instalado), buscando
+    /// el aire de foto macro de la hoja de Ovillo: desenfoque del fondo (miniatura), balance de blancos cálido,
+    /// colores algo más saturados, bloom suave en los brillos de los ojos y la lámpara, y viñeta.
     /// </summary>
     public static class PostprocesoURP
     {
@@ -24,26 +25,30 @@ namespace DesenredaElOvillo.Juego.Tres
             var tono = perfil.Add<Tonemapping>(true);
             tono.mode.Override(TonemappingMode.Neutral);
 
+            var blancos = perfil.Add<WhiteBalance>(true);
+            blancos.temperature.Override(10f);
+            blancos.tint.Override(3f);
+
             var color = perfil.Add<ColorAdjustments>(true);
             color.postExposure.Override(0.15f);
-            color.contrast.Override(6f);
-            color.saturation.Override(6f);
-            color.colorFilter.Override(new Color(1f, 0.96f, 0.9f));
+            color.contrast.Override(9f);
+            color.saturation.Override(14f);
+            color.colorFilter.Override(new Color(1f, 0.95f, 0.87f));
 
             var bloom = perfil.Add<Bloom>(true);
-            bloom.threshold.Override(1.05f);
-            bloom.intensity.Override(0.35f);
-            bloom.scatter.Override(0.6f);
+            bloom.threshold.Override(0.95f);
+            bloom.intensity.Override(0.45f);
+            bloom.scatter.Override(0.7f);
 
             var vineta = perfil.Add<Vignette>(true);
-            vineta.intensity.Override(0.24f);
-            vineta.smoothness.Override(0.45f);
+            vineta.intensity.Override(0.27f);
+            vineta.smoothness.Override(0.5f);
 
             var profundidad = perfil.Add<DepthOfField>(true);
             profundidad.mode.Override(DepthOfFieldMode.Gaussian);
             profundidad.gaussianStart.Override(17f);
             profundidad.gaussianEnd.Override(34f);
-            profundidad.gaussianMaxRadius.Override(1.1f);
+            profundidad.gaussianMaxRadius.Override(1.4f);
         }
 
         public static void PrepararCamara(Camera camara)

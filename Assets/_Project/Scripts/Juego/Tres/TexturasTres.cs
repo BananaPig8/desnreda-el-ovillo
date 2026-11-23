@@ -169,6 +169,75 @@ namespace DesenredaElOvillo.Juego.Tres
             },
             (u, v, a) => Gris(0.72f + a * 0.28f), 6f, true);
 
+        /// <summary>
+        /// Pelusa: una fibra por celda de 2x2 píxeles, cada una con su "altura" al azar en el canal alfa (sin
+        /// suavizar entre celdas: el ruido suave haría manchas en vez de fibras). Se pinta en capas un poco más
+        /// grandes que el cuerpo; cada capa exterior solo conserva las fibras más altas, así el borde queda
+        /// mullido y deshilachado. El color varía un poco por fibra para que no tape el tono de la lana.
+        /// </summary>
+        public static TexturaMaterial Pelusa() => Desde("pelusa", 128, 128,
+            (u, v) => 0.5f,
+            (u, v, a) =>
+            {
+                int cx = (int)(u * 64f), cy = (int)(v * 64f);
+                float altura = Hash(cx, cy, 61);
+                float tono = 0.8f + Hash(cx, cy, 62) * 0.18f;
+                return new Color(tono, tono, tono, altura);
+            }, 0f, true);
+
+        /// <summary>
+        /// Punto de media (jersey) para la bufanda: columnas de "uves" de lana gruesa. U = alrededor de la prenda
+        /// (12 columnas por repetición), V = a lo largo (8 puntos por repetición). Celdas de 16x16 píxeles; tileable.
+        /// </summary>
+        public static TexturaMaterial Punto() => Desde("punto", 192, 128, AlturaPunto, (u, v, a) => Gris(0.46f + a * 0.54f), 7f, true);
+
+        private static float AlturaPunto(float u, float v)
+        {
+            const int columnas = 12, filas = 8;
+            float x = u * columnas, y = v * filas;
+            float cx = x - Mathf.Floor(x), cy = y - Mathf.Floor(y);
+            float d = 9f;
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    float px = cx - dx, py = cy - dy;
+                    // cada punto es una "uve": dos piernas desde las esquinas de arriba hasta el centro de abajo
+                    d = Mathf.Min(d, DistanciaSegmento(px, py, 0.02f, 1f, 0.5f, 0.05f));
+                    d = Mathf.Min(d, DistanciaSegmento(px, py, 0.98f, 1f, 0.5f, 0.05f));
+                }
+            }
+            const float ancho = 0.23f;
+            if (d >= ancho) return 0f;
+            float k = d / ancho;
+            float fibras = 0.86f + 0.14f * RuidoPeriodico(u * 32f, v * 32f, 32, 71);
+            return Mathf.Sqrt(1f - k * k) * fibras;
+        }
+
+        private static float DistanciaSegmento(float px, float py, float ax, float ay, float bx, float by)
+        {
+            float vx = bx - ax, vy = by - ay;
+            float t = Mathf.Clamp01(((px - ax) * vx + (py - ay) * vy) / (vx * vx + vy * vy));
+            float dx = px - (ax + vx * t), dy = py - (ay + vy * t);
+            return Mathf.Sqrt(dx * dx + dy * dy);
+        }
+
+        /// <summary>Sombra de contacto: mancha radial suave (negro con transparencia).</summary>
+        public static TexturaMaterial SombraContacto() => Desde("sombra_contacto", 64, 64,
+            (u, v) => 0.5f,
+            (u, v, a) =>
+            {
+                float d = Mathf.Clamp01(Vector2Distancia(u, v) * 2f);
+                float k = 1f - d;
+                return new Color(0f, 0f, 0f, Mathf.Clamp01(k * k * 0.85f));
+            }, 0f, false);
+
+        private static float Vector2Distancia(float u, float v)
+        {
+            float x = u - 0.5f, y = v - 0.5f;
+            return Mathf.Sqrt(x * x + y * y);
+        }
+
         public static TexturaMaterial Velcro() => Desde("velcro", 128, 128,
             (u, v) =>
             {

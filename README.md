@@ -4,9 +4,11 @@
 
 Juego de estrategia por turnos para PC (Steam) hecho en **Unity 6 + URP**. Las polillas han invadido un taller de costura y quieren comerse el carrete que protege **Ovillo**. No colocas torres: **tejes el camino que las polillas están obligadas a recorrer** y lo llenas de trampas de costura. Diorama 3D artesanal de lana, fieltro y madera.
 
+![Ovillo en el prototipo 3D](Docs/Arte/ovillo_retrato_3d.jpg)
+
 ![Vista previa del prototipo 3D](Docs/Arte/vista_previa_3d_sala2.jpg)
 
-*Prototipo actual con geometría procedural (placeholders), renderizado fuera de Unity con la misma geometría y materiales que el juego.*
+*Prototipo actual con geometría procedural (placeholders hechos a partir de la hoja de Ovillo, `Docs/Arte/referencias/ovillo_hoja_referencia.png`), renderizado fuera de Unity con la misma geometría y materiales que el juego.*
 
 ## Estado
 
@@ -15,7 +17,7 @@ Juego de estrategia por turnos para PC (Steam) hecho en **Unity 6 + URP**. Las p
 | Reglas completas, deterministas y equilibradas con un laboratorio de balance | ✅ |
 | 5 salas de demo diseñadas a mano, cada una con solución de referencia verificada | ✅ |
 | Núcleo de simulación en C# puro + **57 pruebas** (Unity Test Runner y `dotnet test`) | ✅ |
-| Prototipo **3D** jugable en Unity: tablero diorama, lana tubular, Ovillo, 4 polillas, 5 herramientas, interfaz completa, sonidos provisionales | ✅ compila contra UnityEngine con 0 avisos · ⚠️ **aún no se ha abierto en el editor** (este entorno no tiene Unity) |
+| Prototipo **3D** jugable en Unity: tablero diorama, lana tubular con ovillito en la punta, Ovillo según su hoja (8 expresiones, llega andando, tropieza, se duele, corre, celebra), 4 polillas de hebras con caras, 5 herramientas, pelusa y sombras de contacto, presentación de la Reina, interfaz completa, sonidos provisionales | ✅ compila contra UnityEngine con 0 avisos · ⚠️ **aún no se ha abierto en el editor** (este entorno no tiene Unity) |
 | Arte 3D final, animaciones, música, UI final | ⏳ ver `Docs/07_Produccion_Steam_y_feria.md` |
 
 ## Abrir el proyecto en Unity
@@ -49,6 +51,8 @@ dotnet run -c Release --project Tools/Laboratorio -- fijar sala2 --costurero "..
 (cd Tools/VistaPreviaArte/visor && npm install && npm run navegador)   # three.js + Playwright con Chromium
 dotnet run -c Release --project Tools/VistaPreviaArte -- Tools/VistaPreviaArte/visor/datos
 node Tools/VistaPreviaArte/visor/fotografiar.js Tools/VistaPreviaArte/visor captura.png escena_sala2
+# escenas: escena_sala2, escena_sala5, escena_tejiendo, escena_personajes, escena_expresiones, escena_retrato,
+#          cara_<expresión> (normal, feliz, guino, preocupado, susto, triste, dolor, euforia), giro_<personaje>
 ```
 
 ## Documentación

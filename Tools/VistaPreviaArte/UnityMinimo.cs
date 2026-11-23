@@ -8,6 +8,8 @@ namespace UnityEngine
     {
         public float x, y;
         public Vector2(float x, float y) { this.x = x; this.y = y; }
+        public static Vector2 zero => new Vector2(0, 0);
+        public static Vector2 one => new Vector2(1, 1);
         public float magnitude => MathF.Sqrt(x * x + y * y);
         public float sqrMagnitude => x * x + y * y;
         public Vector2 normalized { get { float m = magnitude; return m > 1e-6f ? new Vector2(x / m, y / m) : new Vector2(0, 0); } }
@@ -94,6 +96,8 @@ namespace UnityEngine
         public const float Deg2Rad = MathF.PI / 180f;
         public const float Rad2Deg = 180f / MathF.PI;
         public static float Acos(float v) => MathF.Acos(v);
+        public static float Asin(float v) => MathF.Asin(v);
+        public static float Floor(float v) => MathF.Floor(v);
         public static float Tan(float v) => MathF.Tan(v);
         public static float Clamp01(float v) => v < 0 ? 0 : v > 1 ? 1 : v;
         public static float Clamp(float v, float a, float b) => v < a ? a : v > b ? b : v;

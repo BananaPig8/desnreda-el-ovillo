@@ -23,7 +23,7 @@ public static class Programa
         Png(Path.Combine(salida, "ui_boton.png"), Iconos.Panel(Paleta.Coral, Paleta.Crema, "ui_boton"));
 
         // Texturas de los materiales 3D (color + normales)
-        foreach (var t in new[] { TexturasTres.Fieltro(), TexturasTres.Casilla(), TexturasTres.Lana(), TexturasTres.Madera(), TexturasTres.Tela(), TexturasTres.Velcro() })
+        foreach (var t in new[] { TexturasTres.Fieltro(), TexturasTres.Casilla(), TexturasTres.Lana(), TexturasTres.Madera(), TexturasTres.Tela(), TexturasTres.Velcro(), TexturasTres.Pelusa(), TexturasTres.SombraContacto(), TexturasTres.Punto() })
         {
             Png(Path.Combine(salida, t.Nombre + ".png"), t.Color);
             Png(Path.Combine(salida, t.Nombre + "_n.png"), t.Normal);
@@ -37,6 +37,17 @@ public static class Programa
         Exportar3D.Sala(Cargar("sala5"), new (TipoPolilla, int, bool)[] { (TipoPolilla.Reina, 9, false), (TipoPolilla.Comun, 12, false), (TipoPolilla.Acorazada, 5, false) })
             .Guardar(Path.Combine(salida, "escena_sala5.json"));
         Exportar3D.Personajes().Guardar(Path.Combine(salida, "escena_personajes.json"));
+        Exportar3D.Expresiones().Guardar(Path.Combine(salida, "escena_expresiones.json"));
+        Exportar3D.Retrato().Guardar(Path.Combine(salida, "escena_retrato.json"));
+        // hoja de expresiones (una toma por cara, con la pose de brazos de cada una)
+        var poses = new (Expresion cara, float izq, float der)[]
+        {
+            (Expresion.Normal, 0f, 0f), (Expresion.Feliz, 1f, 1f), (Expresion.Guino, 0f, 1f), (Expresion.Preocupado, 0.3f, 0.3f),
+            (Expresion.Susto, 0.8f, 0.8f), (Expresion.Triste, -0.6f, -0.6f), (Expresion.Dolor, 0.5f, -0.3f), (Expresion.Euforia, 1f, 1f)
+        };
+        foreach (var p in poses)
+            Exportar3D.Retrato(p.cara, p.izq, p.der, 8f).Guardar(Path.Combine(salida, "cara_" + p.cara.ToString().ToLowerInvariant() + ".json"));
+        Exportar3D.Tejiendo(Cargar("sala2"), 0.6f).Guardar(Path.Combine(salida, "escena_tejiendo.json"));
         Exportar3D.Giro(Modelos.Ovillo(), 1.3f).Guardar(Path.Combine(salida, "giro_ovillo.json"));
         foreach (TipoPolilla t in Enum.GetValues(typeof(TipoPolilla)))
             Exportar3D.Giro(Modelos.Polilla(t), 1f).Guardar(Path.Combine(salida, "giro_" + t.ToString().ToLowerInvariant() + ".json"));
