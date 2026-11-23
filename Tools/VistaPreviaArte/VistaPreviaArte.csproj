@@ -19,6 +19,7 @@
     <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/TexturasTres.cs" />
     <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/Modelos.cs" />
     <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/Decorado.cs" />
+    <Compile Include="$(RaizRepositorio)Assets/_Project/Scripts/Juego/Tres/OvilloImportado.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Nucleo/Nucleo.csproj" />

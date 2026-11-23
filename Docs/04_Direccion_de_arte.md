@@ -15,6 +15,7 @@
 | Referencia | Archivo | Uso |
 |---|---|---|
 | **Hoja de Ovillo** (referencia principal) | `Docs/Arte/referencias/ovillo_hoja_referencia.png` | Modelo, materiales, colores, vistas de frente/lado/espaldas y expresiones de Ovillo; acabado de todo el juego. |
+| **Modelo 3D de Ovillo entregado** (OBJ + MTL) | `Assets/_Project/Arte/Modelos/Ovillo/` (copia de lectura en `Resources/Modelos/`) | Modelo base de concepto: proporciones y piezas. Se puede usar en el juego (*Ajustes → Modelo de Ovillo*), ver 4.4. |
 | Ovillo (primer render de referencia) | `Assets/_Project/Resources/Arte/Personajes/ovillo.png` | Retrato de la interfaz y pantalla de victoria (hasta tener el arte final). |
 | Hoja de personajes | `Docs/Arte/referencias/hoja_personajes.png` | Silueta, colores y expresiones de las cuatro polillas; estilo de etiquetas de fieltro de la interfaz. |
 | Retratos recortados | `Assets/_Project/Resources/Arte/Retratos/*.png` | Fichas de "Conoce a las polillas", vista de la oleada. |
@@ -79,9 +80,33 @@ Debe ser **igual que en su hoja** (`Docs/Arte/referencias/ovillo_hoja_referencia
 | Materiales | Hebras de lana crema con torsión de cabos y **pelusa**; núcleo algo más oscuro (las rendijas entre hebras se ven hondas); bufanda de **punto de media**; bracitos y botas de **fieltro** con pelusa; ojos de resina brillante. |
 | Expresiones | Las de la hoja y alguna más (ver la hoja 3D de abajo): **Normal** (sonrisa abierta), **Feliz** (ojos "^ ^"), **Guiño**, **Preocupado**, **Sorprendido** (ojos muy abiertos y boca en "o"), **Triste** (párpados a media altura, boca triste), **Herido** (ojos "&gt; &lt;" y boca triste), **¡Euforia!** (ojos "&gt; &lt;" y boca abierta, al saltar celebrando) y parpadeo. Cada ojo tiene su propio grupo, así el guiño y los "&gt; &lt;" son por ojo. |
 | Animaciones | **Ya en el prototipo:** respirar, parpadear, llegar andando al empezar la sala, **tropezar** con su hebra (salas pares), mirar a la polilla más cercana, preocuparse si se acerca al carrete, **guiñar** cuando la lana llega al carrete, **dolerse** con cada mordisco, saltito cuando cae una polilla, **correr** asustado mientras se comen el carrete, tristeza y **celebrar** con confeti. La punta de la bufanda ondea al correr y saltar; los bracitos se alzan girando hacia arriba. |
+| Modelos en el juego | **De la hoja** (procedural, por defecto) o el **modelo OBJ entregado** troceado y vestido (*Ajustes → Modelo de Ovillo*); los dos usan los mismos grupos, animaciones y expresiones. |
 | Presupuesto (arte final) | 4.000–6.000 triángulos de malla + pelusa por shader · texturas 1024² (color, normal, máscara) · rig de 16–20 huesos (raíz, cuerpo con *squash*, 2 brazos, 2 pies, 3 de bufanda, 2 ojos, 2 párpados, boca). El placeholder procedural usa ~15.000 triángulos de hebras más las capas de pelusa; solo es aceptable porque Ovillo es uno. |
 
 ![Hoja de expresiones del prototipo 3D](Arte/ovillo_expresiones_3d.jpg)
+
+#### El modelo OBJ entregado
+
+`Assets/_Project/Arte/Modelos/Ovillo/Ovillo.obj` es un **modelo estático de concepto** (12.814 vértices, 24.254 triángulos, 8 materiales de color liso, sin UV, sin normales, sin huesos ni animaciones; las fibras son bandas geométricas). Unity lo importa como modelo; además el juego **lo usa de verdad** si se elige en *Ajustes → Modelo de Ovillo → Modelo OBJ*:
+
+1. `OvilloImportado` lee el OBJ (y los colores del MTL) desde `Resources/Modelos/`, lo pasa a las coordenadas del juego (Z invertida, triángulos al revés, escala 0,45, botas en el suelo) y lo **trocea por material y piezas sueltas**.
+2. Cada trozo va a su **grupo de animación** con su pivote: cuerpo (núcleo y bandas), `brazo_izq/der` (giran desde el hombro), `pie_izq/der` (bota y pierna), `ojo_izq/der` (con su brillo), `boca_feliz` (su sonrisa), `bufanda` y `cola_bufanda` (la punta, acortada un 22 % porque en el OBJ atraviesa el suelo).
+3. Se suelda, se calculan normales suaves y UV, y se **viste con los materiales del juego** (lana con pelusa, punto en la bufanda, fieltro, ojos brillantes).
+4. Se le añaden las piezas de expresión que no trae (párpados, ojos "^" y "&gt; &lt;", boca en "o" y boca triste), a la medida de sus ojos y su boca. Así anda, tropieza, se duele, corre y celebra igual que el Ovillo de la hoja.
+
+![El modelo OBJ entregado, vestido, y el Ovillo de la hoja](Arte/ovillo_modelos_comparados.jpg)
+
+![Expresiones sobre el modelo OBJ](Arte/ovillo_modelo_obj_expresiones.jpg)
+
+**Valoración (sin rodeos):** es un buen punto de partida de **proporciones y piezas** (bola grande, ojos con brillo, mofletes, bufanda con punta y flecos, bracitos, botas), pero **todavía no es "igual que la hoja"**: la lana son nervios finos sobre una esfera lisa (se lee más como una nuez o una calabaza que como un ovillo), los ojos son óvalos negros sin iris, la boca es una línea, la bufanda es un tubo liso, los colores tiran a naranja y, al no tener UV, no admite texturas pintadas. Por eso **el juego usa por defecto el Ovillo de la hoja** y el OBJ queda a un clic en Ajustes para compararlos en movimiento.
+
+**Qué cambiar en Blender para que el modelo final sea igual que la hoja** (o partir de `Docs/Arte/Bloqueo/ovillo.glb`, que ya tiene esa forma):
+- Cuerpo: **haces de hebras gruesas** (Ø ≈ 1/9 del ancho de la bola) enrolladas en varias direcciones que tapen la bola, en vez de nervios finos; color crema `#F8DDA8`.
+- Ojos: más grandes (≈ 1/5 del ancho cada uno), con **iris castaño**, pupila y dos brillos.
+- Boca: **abierta en "D" con lengua** rosa; mofletes de fieltro rosa más grandes y suaves.
+- Bufanda: más gruesa y de **punto** (uves), con nudo y punta con flecos que no baje de las botas.
+- Brazos y botas de fieltro con pespunte; **UV desplegadas** (para pintar lana, fieltro y punto) y **rig** con los nombres de grupo de 4.9.
+- `Docs/Arte/Bloqueo/ovillo_modelo_obj_por_piezas.glb` es este mismo OBJ ya **troceado por grupos y con los pivotes puestos**: ahorra el trabajo de separar piezas antes de crear el esqueleto.
 
 ### Polilla común
 

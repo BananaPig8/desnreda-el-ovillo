@@ -10,6 +10,10 @@ public static class Programa
 {
     public static int Main(string[] args)
     {
+        // el modelo OBJ de Ovillo entregado (la misma copia que lee el juego desde Resources)
+        string modelos = Path.Combine(RaizRepositorio(), "Assets", "_Project", "Resources", "Modelos");
+        OvilloImportado.Fuente = () => LeerSiExiste(Path.Combine(modelos, "Ovillo_obj.txt"));
+        OvilloImportado.FuenteMtl = () => LeerSiExiste(Path.Combine(modelos, "Ovillo_mtl.txt"));
         if (args.Length > 0 && args[0] == "verificar") return VerificadorMallas.Ejecutar();
         if (args.Length > 0 && args[0] == "glb")
         {
@@ -53,6 +57,12 @@ public static class Programa
         Exportar3D.Personajes().Guardar(Path.Combine(salida, "escena_personajes.json"));
         Exportar3D.Expresiones().Guardar(Path.Combine(salida, "escena_expresiones.json"));
         Exportar3D.Retrato().Guardar(Path.Combine(salida, "escena_retrato.json"));
+        if (OvilloImportado.Disponible)
+        {
+            Exportar3D.CompararOvillos().Guardar(Path.Combine(salida, "comparar_ovillos.json"));
+            Exportar3D.Giro(OvilloImportado.Modelo(), 1.3f).Guardar(Path.Combine(salida, "giro_ovillo_importado.json"));
+            Exportar3D.CarasOvilloImportado().Guardar(Path.Combine(salida, "caras_ovillo_importado.json"));
+        }
         // hoja de expresiones (una toma por cara, con la pose de brazos de cada una)
         var poses = new (Expresion cara, float izq, float der)[]
         {
@@ -68,6 +78,8 @@ public static class Programa
         Console.WriteLine("Arte y escenas escritos en " + Path.GetFullPath(salida));
         return 0;
     }
+
+    private static string LeerSiExiste(string ruta) => File.Exists(ruta) ? File.ReadAllText(ruta) : null;
 
     private static string RaizRepositorio()
     {

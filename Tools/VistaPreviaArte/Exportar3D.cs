@@ -280,6 +280,48 @@ public static class Exportar3D
         return e;
     }
 
+    /// <summary>El modelo OBJ entregado tal cual (colores lisos), el mismo vestido con los materiales del juego y el Ovillo de la hoja.</summary>
+    public static Escena3D CompararOvillos()
+    {
+        var e = new Escena3D();
+        e.Agregar(new Pieza { Malla = CatalogoMallas.Caja(30f, 0.5f, 20f, 0.08f), Material = "mesa", Color = Color.white }, new Vector3(0, -0.33f, 3f));
+        e.Agregar(new Pieza { Malla = CatalogoMallas.Caja(5.4f, 0.08f, 2.2f, 0.04f), Material = "casilla", Color = Paleta.Hex("#7E9A4A"), Pelusa = 1 }, new Vector3(0, -0.04f, 0.2f));
+        e.Agregar(OvilloImportado.Modelo(false), new Vector3(-1.75f, 0f, 0f), 0f, 1.3f);
+        e.Agregar(OvilloImportado.Modelo(true), new Vector3(0f, 0f, 0f), 0f, 1.3f);
+        e.Agregar(Modelos.Ovillo(), new Vector3(1.75f, 0f, 0f), 0f, 1.3f);
+        LucesYCamara(e, new Vector3(0, 0.6f, 0f), 2.4f, 14f, 22f);
+        return e;
+    }
+
+    /// <summary>El modelo OBJ vestido con cinco caras (normal, feliz, guiño, sorprendido, herido) y bracitos alzados desde el hombro.</summary>
+    public static Escena3D CarasOvilloImportado()
+    {
+        var e = new Escena3D();
+        e.Agregar(new Pieza { Malla = CatalogoMallas.Caja(30f, 0.5f, 20f, 0.08f), Material = "mesa", Color = Color.white }, new Vector3(0, -0.33f, 3f));
+        e.Agregar(new Pieza { Malla = CatalogoMallas.Caja(8.4f, 0.08f, 2.2f, 0.04f), Material = "casilla", Color = Paleta.Hex("#7E9A4A"), Pelusa = 1 }, new Vector3(0, -0.04f, 0.2f));
+        var caras = new[] { (Expresion.Normal, 0f), (Expresion.Feliz, 1f), (Expresion.Guino, 0.5f), (Expresion.Susto, 0.8f), (Expresion.Dolor, -0.5f) };
+        for (int i = 0; i < caras.Length; i++)
+        {
+            var o = OvilloImportado.Modelo(true);
+            Modelos.AplicarCara(o, Modelos.Rasgos(caras[i].Item1));
+            AlzarDesdeHombro(o, caras[i].Item2);
+            e.Agregar(o, new Vector3(-3.3f + i * 1.65f, 0f, 0f), 0f, 1.3f);
+        }
+        LucesYCamara(e, new Vector3(0, 0.6f, 0f), 3.4f, 12f, 22f);
+        return e;
+    }
+
+    /// <summary>Alza los bracitos del modelo OBJ desde el hombro (igual que VistaOvillo con _brazosConHombro).</summary>
+    private static void AlzarDesdeHombro(Pieza p, float alzar)
+    {
+        if (p.Grupo == "brazo_izq" || p.Grupo == "brazo_der")
+        {
+            float lado = p.Grupo == "brazo_izq" ? -1f : 1f;
+            p.Rotacion = new Vector3(0, 0, lado * (alzar >= 0f ? 80f * alzar : 25f * alzar));
+        }
+        foreach (var h in p.Hijos) AlzarDesdeHombro(h, alzar);
+    }
+
     /// <summary>Retrato de Ovillo como en su hoja: de tres cuartos, saludando con un bracito, sobre fieltro verde.</summary>
     public static Escena3D Retrato(Expresion cara = Expresion.Normal, float alzarIzq = 1f, float alzarDer = 0f, float giro = 22f)
     {

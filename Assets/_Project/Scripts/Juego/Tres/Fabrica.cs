@@ -66,6 +66,7 @@ namespace DesenredaElOvillo.Juego.Tres
                 case "oro": Configurar(m, null, 0.9f, 0.55f, 1f); break;
                 case "boton": Configurar(m, Textura(TexturasTres.Fieltro()), 0f, 0.42f, 0.25f); break;
                 case "brillante": Configurar(m, null, 0f, 0.86f, 1f); break;
+                case "liso": Configurar(m, null, 0f, 0.45f, 1f); break;
                 case "emisivo":
                     Configurar(m, null, 0f, 0.3f, 1f);
                     m.EnableKeyword("_EMISSION");

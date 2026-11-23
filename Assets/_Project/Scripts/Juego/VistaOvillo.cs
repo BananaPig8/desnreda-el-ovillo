@@ -29,7 +29,9 @@ namespace DesenredaElOvillo.Juego
         private ModeloInstanciado _modelo;
         private Transform _cuerpo, _cola, _brazoIzq, _brazoDer, _pieIzq, _pieDer;
         private Vector3 _brazoIzqBase, _brazoDerBase, _pieIzqBase, _pieDerBase;
-        private Quaternion _colaBase = Quaternion.identity;
+        private Quaternion _colaBase = Quaternion.identity, _brazoIzqRot = Quaternion.identity, _brazoDerRot = Quaternion.identity;
+        /// <summary>Brazos del modelo OBJ: giran desde el hombro (los de la hoja son bolitas que giran sobre sí mismas).</summary>
+        private bool _brazosConHombro;
         private readonly Ojo[] _ojos = new Ojo[2];
         private Transform _bocaFeliz, _bocaO, _bocaTriste;
         private float _guinoHasta;
@@ -56,15 +58,17 @@ namespace DesenredaElOvillo.Juego
             go.transform.rotation = Quaternion.Euler(0, GiroReposo, 0);
             go.transform.localScale = Vector3.one * Escala;
             var v = go.AddComponent<VistaOvillo>();
-            v._modelo = Constructor.Instanciar(Modelos.Ovillo(), go.transform);
+            Pieza modelo = Ajustes.ModeloOvillo == 1 ? OvilloImportado.Modelo() : null;
+            v._brazosConHombro = modelo != null;
+            v._modelo = Constructor.Instanciar(modelo ?? Modelos.Ovillo(), go.transform);
             v._cuerpo = v._modelo.Primero("cuerpo");
             v._cola = v._modelo.Primero("cola_bufanda");
             v._brazoIzq = v._modelo.Primero("brazo_izq");
             v._brazoDer = v._modelo.Primero("brazo_der");
             v._pieIzq = v._modelo.Primero("pie_izq");
             v._pieDer = v._modelo.Primero("pie_der");
-            if (v._brazoIzq != null) v._brazoIzqBase = v._brazoIzq.localPosition;
-            if (v._brazoDer != null) v._brazoDerBase = v._brazoDer.localPosition;
+            if (v._brazoIzq != null) { v._brazoIzqBase = v._brazoIzq.localPosition; v._brazoIzqRot = v._brazoIzq.localRotation; }
+            if (v._brazoDer != null) { v._brazoDerBase = v._brazoDer.localPosition; v._brazoDerRot = v._brazoDer.localRotation; }
             if (v._pieIzq != null) v._pieIzqBase = v._pieIzq.localPosition;
             if (v._pieDer != null) v._pieDerBase = v._pieDer.localPosition;
             if (v._cola != null) v._colaBase = v._cola.localRotation;
@@ -346,13 +350,20 @@ namespace DesenredaElOvillo.Juego
         /// </summary>
         private void PonerBrazos(float alzar, float balanceo)
         {
-            PonerBrazo(_brazoIzq, _brazoIzqBase, -1f, alzar, -balanceo);
-            PonerBrazo(_brazoDer, _brazoDerBase, 1f, alzar, balanceo);
+            PonerBrazo(_brazoIzq, _brazoIzqBase, _brazoIzqRot, -1f, alzar, -balanceo);
+            PonerBrazo(_brazoDer, _brazoDerBase, _brazoDerRot, 1f, alzar, balanceo);
         }
 
-        private static void PonerBrazo(Transform brazo, Vector3 basePos, float lado, float alzar, float balanceo)
+        private void PonerBrazo(Transform brazo, Vector3 basePos, Quaternion baseRot, float lado, float alzar, float balanceo)
         {
             if (brazo == null) return;
+            if (_brazosConHombro)
+            {
+                // el brazo sale del hombro hacia fuera: alzarlo es girarlo hacia arriba (antihorario el derecho, horario el izquierdo)
+                float arriba = lado * (alzar >= 0f ? 80f * alzar : 25f * alzar);
+                brazo.localRotation = baseRot * Quaternion.Euler(balanceo * 20f, 0f, arriba);
+                return;
+            }
             float giro = lado * 48f * (alzar >= 0f ? 1f - 2f * alzar : 1f + alzar);
             brazo.localRotation = Quaternion.Euler(balanceo * 25f, 0f, giro);
             brazo.localPosition = basePos + new Vector3(lado * 0.03f * Mathf.Max(0f, alzar), 0.13f * Mathf.Max(0f, alzar), balanceo * 0.06f);

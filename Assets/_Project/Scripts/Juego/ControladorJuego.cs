@@ -83,6 +83,9 @@ namespace DesenredaElOvillo.Juego
             Interfaz = gameObject.AddComponent<Interfaz>();
 
             ReglasBase = Reglas.PorDefecto();
+            // el modelo OBJ de Ovillo entregado (copia de lectura en Resources/Modelos)
+            OvilloImportado.Fuente = () => TextoDe("Modelos/Ovillo_obj");
+            OvilloImportado.FuenteMtl = () => TextoDe("Modelos/Ovillo_mtl");
             CargarSalas();
             Ajustes.Aplicar();
         }
@@ -90,6 +93,12 @@ namespace DesenredaElOvillo.Juego
         private void Start()
         {
             MostrarFondoMenu();
+        }
+
+        private static string TextoDe(string recurso)
+        {
+            var t = Resources.Load<TextAsset>(recurso);
+            return t != null ? t.text : null;
         }
 
         private T Hijo<T>(string nombre) where T : Component

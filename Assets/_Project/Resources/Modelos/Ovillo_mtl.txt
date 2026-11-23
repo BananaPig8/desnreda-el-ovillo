@@ -1,0 +1,48 @@
+newmtl wool_cream
+Ka .15 .15 .15
+Kd 0.91 0.7 0.43
+Ks .08 .08 .08
+Ns 24
+
+newmtl wool_light
+Ka .15 .15 .15
+Kd 1 0.82 0.56
+Ks .08 .08 .08
+Ns 24
+
+newmtl scarf_red
+Ka .15 .15 .15
+Kd 0.78 0.035 0.025
+Ks .08 .08 .08
+Ns 24
+
+newmtl scarf_light
+Ka .15 .15 .15
+Kd 0.95 0.12 0.07
+Ks .08 .08 .08
+Ns 24
+
+newmtl boots_brown
+Ka .15 .15 .15
+Kd 0.22 0.09 0.035
+Ks .08 .08 .08
+Ns 24
+
+newmtl eyes
+Ka .15 .15 .15
+Kd 0.025 0.012 0.008
+Ks .08 .08 .08
+Ns 24
+
+newmtl eye_glint
+Ka .15 .15 .15
+Kd 1 0.94 0.82
+Ks .08 .08 .08
+Ns 24
+
+newmtl cheeks
+Ka .15 .15 .15
+Kd 0.98 0.22 0.25
+Ks .08 .08 .08
+Ns 24
+

@@ -1,0 +1,5 @@
+OVILLO - MODELO 3D BASE
+
+Copia Ovillo.obj y Ovillo.mtl juntos en Assets/Models/Ovillo/. Unity importará el OBJ como modelo estático. Si los materiales no se asignan automáticamente, crea materiales URP/Lit con los colores del MTL.
+
+IMPORTANTE: modelo estático de concepto, sin rig, skin weights ni animaciones. Para animarlo, abre el OBJ en Blender, crea un esqueleto, ajusta pesos y exporta a FBX. Las fibras están representadas mediante bandas geométricas estilizadas.

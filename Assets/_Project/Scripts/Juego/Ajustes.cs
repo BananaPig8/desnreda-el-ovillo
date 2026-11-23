@@ -10,6 +10,7 @@ namespace DesenredaElOvillo.Juego
         private const string ClaveColorLana = "ovillo.colorLana";
         private const string ClaveModoFeria = "ovillo.modoFeria";
         private const string ClaveTutorial = "ovillo.tutorial";
+        private const string ClaveModeloOvillo = "ovillo.modeloOvillo";
 
         public static float Volumen
         {
@@ -41,6 +42,16 @@ namespace DesenredaElOvillo.Juego
         {
             get => PlayerPrefs.GetInt(ClaveTutorial, 1) == 1;
             set => PlayerPrefs.SetInt(ClaveTutorial, value ? 1 : 0);
+        }
+
+        /// <summary>
+        /// Modelo de Ovillo: 0 = el de la hoja de personaje (procedural, por defecto); 1 = el modelo OBJ entregado
+        /// (Assets/_Project/Arte/Modelos/Ovillo), troceado y vestido con los materiales del juego.
+        /// </summary>
+        public static int ModeloOvillo
+        {
+            get => Mathf.Clamp(PlayerPrefs.GetInt(ClaveModeloOvillo, 0), 0, 1);
+            set => PlayerPrefs.SetInt(ClaveModeloOvillo, Mathf.Clamp(value, 0, 1));
         }
 
         public static void Aplicar()

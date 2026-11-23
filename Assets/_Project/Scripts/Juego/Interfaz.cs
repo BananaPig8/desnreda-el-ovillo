@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DesenredaElOvillo.Nucleo;
+using DesenredaElOvillo.Juego.Tres;
 using UnityEngine;
 
 namespace DesenredaElOvillo.Juego
@@ -242,7 +243,7 @@ namespace DesenredaElOvillo.Juego
         private void DibujarAjustes()
         {
             Fundido(0.35f);
-            var r = new Rect(460, 150, 1000, 780);
+            var r = new Rect(460, 110, 1000, 860);
             Panel(r, _e.Panel);
             GUI.Label(new Rect(r.x, r.y + 36, r.width, 70), "Ajustes", _e.Titulo);
             float x = r.x + 80, y = r.y + 150;
@@ -272,6 +273,24 @@ namespace DesenredaElOvillo.Juego
                 GUI.DrawTexture(new Rect(b.x + 36, b.y + 12, 48, 36), Tex(Iconos.PiezaLana(Iconos.Derecha | Iconos.Izquierda)), ScaleMode.StretchToFill);
                 GUI.color = antes;
                 if (Sobre(b)) _ayudaEmergente = Paleta.NombresColoresLana[i] + ". La crema es la que mejor se distingue del tablero para todo tipo de visión del color.";
+            }
+            y += 90;
+
+            GUI.Label(new Rect(x, y, 420, 44), "Modelo de Ovillo", _e.Subtitulo);
+            string[] modelos = { "De la hoja", "Modelo OBJ" };
+            for (int i = 0; i < modelos.Length; i++)
+            {
+                var b = new Rect(x + 420 + i * 210, y - 6, 190, 60);
+                bool actual = Ajustes.ModeloOvillo == i;
+                bool disponible = i == 0 || OvilloImportado.Disponible;
+                if (Boton(b, modelos[i], actual ? _e.Boton : _e.BotonSecundario, disponible) && !actual)
+                {
+                    Ajustes.ModeloOvillo = i;
+                    C.Tablero.RehacerOvillo();
+                }
+                if (Sobre(b)) _ayudaEmergente = i == 0
+                    ? "Ovillo hecho según su hoja de personaje: hebras gruesas enrolladas, ojos grandes, bufanda de punto."
+                    : "El modelo 3D entregado (Arte/Modelos/Ovillo), troceado para animarlo y vestido con los materiales del juego.";
             }
             y += 90;
 

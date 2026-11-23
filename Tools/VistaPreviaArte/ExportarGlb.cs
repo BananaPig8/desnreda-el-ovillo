@@ -35,7 +35,7 @@ public sealed class Glb
         ["fieltro"] = (0.06f, 0f), ["casilla"] = (0.05f, 0f), ["lana"] = (0.12f, 0f), ["madera"] = (0.28f, 0f),
         ["mesa"] = (0.32f, 0f), ["tela"] = (0.12f, 0f), ["velcro"] = (0.1f, 0f), ["metal"] = (0.62f, 0.85f),
         ["oro"] = (0.55f, 0.9f), ["boton"] = (0.42f, 0f), ["brillante"] = (0.86f, 0f), ["emisivo"] = (0.3f, 0f),
-        ["punto"] = (0.08f, 0f)
+        ["punto"] = (0.08f, 0f), ["liso"] = (0.45f, 0f)
     };
 
     public static void Exportar(Pieza raiz, string ruta)
@@ -212,6 +212,8 @@ public static class CatalogoModelos
     public static IEnumerable<(string nombre, Pieza modelo)> Todos()
     {
         yield return ("ovillo", Modelos.Ovillo());
+        // el modelo OBJ entregado, ya troceado por grupos de animación y con pivotes (punto de partida para el rig)
+        if (OvilloImportado.Disponible) yield return ("ovillo_modelo_obj_por_piezas", OvilloImportado.Modelo(false));
         foreach (TipoPolilla t in Enum.GetValues(typeof(TipoPolilla)))
             yield return ("polilla_" + t.ToString().ToLowerInvariant(), Modelos.Polilla(t));
         foreach (TipoHerramienta t in Enum.GetValues(typeof(TipoHerramienta)))
@@ -253,6 +255,7 @@ public static class VerificadorMallas
             foreach (var h in p.Hijos) Recorrer(h);
         }
         foreach (var (_, modelo) in CatalogoModelos.Todos()) Recorrer(modelo);
+        if (OvilloImportado.Disponible) Recorrer(OvilloImportado.Modelo(true));
         var casilla = CatalogoMallas.Caja(0.92f, Medidas.AlturaCasilla, 0.92f, 0.05f);
         claves.Add(casilla);
         claves.Add(CapasPelusa.Malla(casilla, 1, false));

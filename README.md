@@ -18,6 +18,7 @@ Juego de estrategia por turnos para PC (Steam) hecho en **Unity 6 + URP**. Las p
 | 5 salas de demo diseñadas a mano, cada una con solución de referencia verificada | ✅ |
 | Núcleo de simulación en C# puro + **57 pruebas** (Unity Test Runner y `dotnet test`) | ✅ |
 | Prototipo **3D** jugable en Unity: tablero diorama, lana tubular con ovillito en la punta, Ovillo según su hoja (8 expresiones, llega andando, tropieza, se duele, corre, celebra), 4 polillas de hebras con caras, 5 herramientas, pelusa y sombras de contacto, presentación de la Reina, interfaz completa, sonidos provisionales | ✅ compila contra UnityEngine con 0 avisos · ⚠️ **aún no se ha abierto en el editor** (este entorno no tiene Unity) |
+| Modelo OBJ de Ovillo entregado: integrado, troceado por grupos, animado y vestido con los materiales del juego (*Ajustes → Modelo de Ovillo*) | ✅ ver `Docs/04_Direccion_de_arte.md`, 4.4 |
 | Arte 3D final, animaciones, música, UI final | ⏳ ver `Docs/07_Produccion_Steam_y_feria.md` |
 
 ## Abrir el proyecto en Unity
@@ -78,7 +79,8 @@ Assets/_Project/Scripts/Nucleo   reglas en C# puro (sin Unity)
 Assets/_Project/Scripts/Juego    presentación Unity 3D (Tres/ = geometría, materiales, modelos)
 Assets/_Project/Scripts/Editor   configuración automática y utilidades
 Assets/_Project/Tests/EditMode   pruebas NUnit
-Assets/_Project/Resources        salas (texto), Ovillo y retratos
+Assets/_Project/Resources        salas (texto), Ovillo, retratos y la copia de lectura del modelo OBJ
+Assets/_Project/Arte/Modelos     modelos 3D entregados (Ovillo.obj + .mtl)
 Tools/                           pruebas, laboratorio, verificación y vista previa con .NET
 Docs/                            diseño, arte, producción y balance
 ```

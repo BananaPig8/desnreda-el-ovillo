@@ -166,6 +166,18 @@ namespace DesenredaElOvillo.Juego
             _colorResalte = color;
         }
 
+        /// <summary>Vuelve a crear a Ovillo en su sitio (al cambiar de modelo en Ajustes).</summary>
+        public void RehacerOvillo()
+        {
+            if (Tablero == null || Ovillo == null) return;
+            var fuera = DireccionFuera(Tablero, Tablero.Salida);
+            var pos = Mundo(Tablero.Salida) + fuera * 1.05f + Vector3.back * 0.25f - Vector3.up * (Medidas.AlturaCasilla + 0.08f);
+            _objetos.Remove(Ovillo.gameObject);
+            Destroy(Ovillo.gameObject);
+            Ovillo = VistaOvillo.Crear(transform, pos, fuera);
+            _objetos.Add(Ovillo.gameObject);
+        }
+
         public void Asustar(float s) { if (Ovillo != null) Ovillo.Asustar(s); }
         public void Saltar(float s) { if (Ovillo != null) Ovillo.Saltar(s); }
         public void Panico(float s) { if (Ovillo != null) Ovillo.Panico(s); }

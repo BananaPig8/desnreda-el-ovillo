@@ -72,9 +72,14 @@ namespace DesenredaElOvillo.Juego.Tres
         /// <summary>Todas las mallas generadas hasta ahora (para verificarlas o exportarlas).</summary>
         public static IEnumerable<KeyValuePair<string, DatosMalla>> Generadas => Cache;
 
+        /// <summary>Registra una malla hecha fuera del catálogo (modelos importados) para usarla por su clave.</summary>
+        public static void Registrar(string clave, DatosMalla malla) => Cache[clave] = malla;
+
         public static DatosMalla Obtener(string clave)
         {
             if (Cache.TryGetValue(clave, out var m)) return m;
+            // una malla importada que aún no se ha registrado: esfera pequeña provisional (no se cachea)
+            if (clave.StartsWith("importado:") && clave.IndexOf('|') < 0) return Mallas.Esfera(0.05f, 8);
             int barra = clave.IndexOf('|');
             if (barra >= 0)
             {
@@ -118,13 +123,15 @@ namespace DesenredaElOvillo.Juego.Tres
         private static void ParametrosPelusa(string claveBase, out float espesor, out Vector2? escalaUv)
         {
             var partes = claveBase.Split(':');
-            var p = partes.Length > 1 ? Numeros(partes[1]) : new float[0];
+            float Parametro(int i) => partes.Length > 1 ? Numeros(partes[1])[i] : 0.05f;
             switch (partes[0])
             {
-                case "hebras": espesor = 0.22f * p[2]; escalaUv = new Vector2(0.5f, 0.5f); break;
+                case "hebras": espesor = 0.22f * Parametro(2); escalaUv = new Vector2(0.5f, 0.5f); break;
                 case "anillo":
-                case "colgante": espesor = 0.22f * p[1]; escalaUv = new Vector2(0.33f, 0.19f); break;
+                case "colgante": espesor = 0.22f * Parametro(1); escalaUv = new Vector2(0.33f, 0.19f); break;
                 case "caja": espesor = CapasPelusa.Espesor * 0.6f; escalaUv = Vector2.one; break;
+                // modelos importados: ya traen UV (octaédricas x2 o cilíndricas en la bufanda)
+                case "importado": espesor = CapasPelusa.Espesor * 0.8f; escalaUv = Vector2.one * 0.6f; break;
                 default: espesor = CapasPelusa.Espesor; escalaUv = null; break;
             }
         }
@@ -323,6 +330,7 @@ namespace DesenredaElOvillo.Juego.Tres
                 // párpado: se cierra escalando su pivote en Y (0 = abierto, 1 = cerrado)
                 var parpado = ojo.Hijo(Pivote("Párpado", V(0, 0.083f, -0.006f), null, "parpado" + sufijo));
                 parpado.Escala = V(1f, 0.001f, 1f);
+                parpado.Oculta = true;
                 parpado.Hijo(P("Piel", "esfera", "lana", lana, V(0, -0.083f, -0.004f), V(0.157f, 0.177f, 0.088f)));
                 // ojo feliz "^"
                 var feliz = ojo.Hijo(Pivote("Ojo feliz", V(0, 0.004f, -0.032f), null, "feliz" + sufijo));
@@ -450,6 +458,7 @@ namespace DesenredaElOvillo.Juego.Tres
                 ojo.Hijo(P("Brillo", "esfera_baja", "brillante", Blanco, V(-0.2f, 0.25f, -0.45f), Vector3.one * 0.3f));
                 var parpado = cara.Hijo(Pivote("Párpado", V(lado * s * 0.18f, s * 0.17f, z - s * 0.005f), null, "parpados"));
                 parpado.Escala = V(1f, 0.001f, 1f);
+                parpado.Oculta = true;
                 parpado.Hijo(P("Piel", "esfera", "lana", e.Cuerpo, V(0, -s * 0.13f, -s * 0.01f), V(s * 0.23f, s * 0.27f, s * 0.13f)));
                 var ojoX = cara.Hijo(Pivote("Ojo en X", V(lado * s * 0.18f, s * 0.04f, z * 1.03f), null, "ojos_x"));
                 ojoX.Oculta = true;

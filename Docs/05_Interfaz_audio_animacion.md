@@ -34,7 +34,7 @@ La interfaz se diseña a 1920×1080 y se escala con bandas a cualquier resoluci�
 |---|---|
 | Menú principal | Logo en etiqueta de fieltro, lema, Jugar, Cómo jugar, Ajustes, Créditos, Salir; el tablero de la sala 1 con Ovillo de fondo. |
 | Cómo jugar | 5 páginas: el taller en peligro, tejer la lana, herramientas (icono, categoría, ficha), **conoce a las polillas** (retratos de la hoja de personajes), controles. |
-| Ajustes | Volumen, velocidad de oleada, color de la lana (accesibilidad), modo feria, consejos, pantalla completa. |
+| Ajustes | Volumen, velocidad de oleada, color de la lana (accesibilidad), **modelo de Ovillo** (el de la hoja o el modelo OBJ entregado), modo feria, consejos, pantalla completa. |
 | Elección de herramientas | Tres tarjetas cosidas; se marcan dos; "¡Al costurero!". |
 | Recompensa | "¡Sala superada!" y tres mejoras. |
 | Victoria | Ovillo celebrando, estadísticas e **invitación a la lista de deseados** (la URL se pone en `Configuracion.UrlSteam`). |
