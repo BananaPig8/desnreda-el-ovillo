@@ -1,6 +1,6 @@
 # 2. Reglas del juego
 
-Este documento es la **fuente de verdad de las reglas**. El código las implementa en `Assets/_Project/Scripts/Nucleo/` y cada regla tiene una prueba automática en `Assets/_Project/Tests/EditMode/`. Los números viven en `Reglas.cs` (un solo sitio).
+Este documento es la **fuente de verdad de las reglas** (independientes de la presentación 2D o 3D). El código las implementa en `Assets/_Project/Scripts/Nucleo/` y cada regla tiene una prueba automática en `Assets/_Project/Tests/EditMode/`. Los números viven en `Reglas.cs` (un solo sitio).
 
 ---
 

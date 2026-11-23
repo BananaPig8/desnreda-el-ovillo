@@ -4,5 +4,11 @@
   "description": "Visor three.js de las escenas exportadas por Tools/VistaPreviaArte",
   "dependencies": {
     "three": "0.170.0"
+  },
+  "devDependencies": {
+    "playwright": "1.48.2"
+  },
+  "scripts": {
+    "navegador": "playwright install chromium"
   }
 }
