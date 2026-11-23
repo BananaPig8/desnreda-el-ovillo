@@ -1,105 +1,103 @@
 using System.Collections.Generic;
+using DesenredaElOvillo.Juego.Tres;
 using DesenredaElOvillo.Nucleo;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DesenredaElOvillo.Juego
 {
     /// <summary>
-    /// Dibuja la hebra de lana casilla a casilla con piezas rectas, curvas y puntas, cada una con su sombra,
-    /// y las huellas donde aterrizará la polilla veloz.
+    /// La hebra de lana en 3D: un tubo grueso con torsión (textura helicoidal y mapa de normales) que sigue
+    /// el recorrido con curvas suaves, apoyado sobre el fieltro y proyectando sombra. Cuando el jugador
+    /// teje, el último tramo crece en lugar de aparecer de golpe. También coloca las huellas de la veloz.
     /// </summary>
     public sealed class VistaLana : MonoBehaviour
     {
-        private readonly List<SpriteRenderer> _piezas = new List<SpriteRenderer>();
-        private readonly List<SpriteRenderer> _sombras = new List<SpriteRenderer>();
-        private readonly List<SpriteRenderer> _huellas = new List<SpriteRenderer>();
-        private int _ultimaCantidad;
-        private float _latido;
+        private const float DuracionCrecimiento = 0.12f;
+        private MeshFilter _filtro;
+        private MeshRenderer _renderer;
+        private Mesh _malla;
+        private readonly MaterialPropertyBlock _bloque = new MaterialPropertyBlock();
+        private readonly List<Vector3> _centros = new List<Vector3>();
+        private readonly List<GameObject> _huellas = new List<GameObject>();
+        private int _cantidadAnterior;
+        private float _crecimiento = 1f;
 
         public Color ColorLana => Paleta.ColoresLana[Ajustes.ColorLana];
 
+        private void Asegurar()
+        {
+            if (_filtro != null) return;
+            var go = new GameObject("Hebra de lana");
+            go.transform.SetParent(transform, false);
+            _filtro = go.AddComponent<MeshFilter>();
+            _renderer = go.AddComponent<MeshRenderer>();
+            _renderer.sharedMaterial = Materiales.Obtener("lana");
+            _renderer.shadowCastingMode = ShadowCastingMode.On;
+            _malla = new Mesh { name = "Lana" };
+            _malla.MarkDynamic();
+            _filtro.sharedMesh = _malla;
+        }
+
         public void Dibujar(Recorrido r)
         {
-            int n = r == null ? 0 : r.Cantidad;
-            while (_piezas.Count < n)
-            {
-                _sombras.Add(CrearRenderer("Sombra lana", Capas.LanaSombra));
-                _piezas.Add(CrearRenderer("Lana", Capas.Lana));
-            }
-            if (n > _ultimaCantidad) _latido = 0.25f;
-            _ultimaCantidad = n;
-            for (int i = 0; i < _piezas.Count; i++)
-            {
-                bool visible = i < n && n > 1;
-                _piezas[i].enabled = visible;
-                _sombras[i].enabled = visible;
-                if (!visible) continue;
-                var c = r.Celdas[i];
-                int mascara = 0;
-                if (i > 0) mascara |= Bit(r.Celdas[i - 1].Menos(c));
-                if (i < n - 1) mascara |= Bit(r.Celdas[i + 1].Menos(c));
-                var sprite = Texturas.PiezaLana(mascara);
-                var pos = VistaTablero.Mundo(c);
-                _piezas[i].sprite = sprite;
-                _piezas[i].color = ColorLana;
-                _piezas[i].transform.position = pos;
-                _sombras[i].sprite = sprite;
-                _sombras[i].color = new Color(0.12f, 0.08f, 0.04f, 0.35f);
-                _sombras[i].transform.position = pos + new Vector3(0.05f, -0.07f, 0);
-            }
+            Asegurar();
+            _centros.Clear();
+            if (r != null)
+                foreach (var c in r.Celdas) _centros.Add(new Vector3(c.X + 0.5f, Medidas.AlturaLana, c.Y + 0.5f));
+            if (_centros.Count > _cantidadAnterior && _cantidadAnterior > 0) _crecimiento = 0f;
+            else _crecimiento = 1f;
+            _cantidadAnterior = _centros.Count;
+            Reconstruir();
         }
 
-        private static int Bit(Celda d)
+        private void Reconstruir()
         {
-            if (d.X == 1) return Texturas.Derecha;
-            if (d.X == -1) return Texturas.Izquierda;
-            if (d.Y == 1) return Texturas.Arriba;
-            return Texturas.Abajo;
-        }
-
-        public void MostrarHuellas(Recorrido r, IList<int> indices)
-        {
-            int n = indices == null ? 0 : indices.Count;
-            while (_huellas.Count < n) _huellas.Add(CrearRenderer("Huella", Capas.Huella));
-            for (int i = 0; i < _huellas.Count; i++)
+            if (_centros.Count < 2)
             {
-                bool visible = i < n;
-                _huellas[i].enabled = visible;
-                if (!visible) continue;
-                _huellas[i].sprite = Texturas.Huella();
-                _huellas[i].transform.position = VistaTablero.Mundo(r.Celdas[indices[i]]) + new Vector3(0.28f, 0.28f, 0);
-                _huellas[i].transform.localScale = Vector3.one * 0.42f;
+                _malla.Clear();
+                return;
             }
+            var centros = new List<Vector3>(_centros);
+            if (_crecimiento < 1f)
+            {
+                var a = centros[centros.Count - 2];
+                var b = centros[centros.Count - 1];
+                centros[centros.Count - 1] = Vector3.Lerp(a, b, Mathf.Max(0.05f, _crecimiento));
+            }
+            var camino = Mallas.CaminoSuave(centros);
+            var datos = Mallas.Tubo(camino, Medidas.RadioLana, 14, 2.5f);
+            Constructor.AMesh(datos, "Lana", _malla);
+            Materiales.Tenir(_renderer, ColorLana, _bloque);
         }
 
         private void Update()
         {
-            if (_latido <= 0 || _ultimaCantidad == 0 || _ultimaCantidad > _piezas.Count) return;
-            _latido -= Time.deltaTime;
-            float k = 1f + Mathf.Max(0, _latido) * 0.6f;
-            var ultima = _piezas[_ultimaCantidad - 1];
-            if (ultima != null) ultima.transform.localScale = new Vector3(k, k, 1);
+            if (_crecimiento >= 1f || _malla == null) return;
+            _crecimiento = Mathf.Min(1f, _crecimiento + Time.unscaledDeltaTime / DuracionCrecimiento);
+            Reconstruir();
         }
 
-        private SpriteRenderer CrearRenderer(string nombre, int orden)
+        public void MostrarHuellas(Recorrido r, IList<int> indices)
         {
-            var go = new GameObject(nombre);
-            go.transform.SetParent(transform, false);
-            var sr = go.AddComponent<SpriteRenderer>();
-            Texturas.PrepararRenderer(sr);
-            sr.sortingOrder = orden;
-            return sr;
+            foreach (var h in _huellas) if (h != null) Destroy(h);
+            _huellas.Clear();
+            if (r == null || indices == null) return;
+            foreach (int i in indices)
+            {
+                var c = r.Celdas[i];
+                var modelo = Constructor.Instanciar(Modelos.Huella(), transform);
+                modelo.Raiz.position = new Vector3(c.X + 0.82f, Medidas.AlturaCasilla + 0.006f, c.Y + 0.2f);
+                modelo.Raiz.rotation = Quaternion.Euler(0, 20, 0);
+                _huellas.Add(modelo.Raiz.gameObject);
+            }
         }
 
         public void Limpiar()
         {
-            foreach (var p in _piezas) if (p != null) Destroy(p.gameObject);
-            foreach (var p in _sombras) if (p != null) Destroy(p.gameObject);
-            foreach (var p in _huellas) if (p != null) Destroy(p.gameObject);
-            _piezas.Clear();
-            _sombras.Clear();
-            _huellas.Clear();
-            _ultimaCantidad = 0;
+            if (_malla != null) _malla.Clear();
+            _cantidadAnterior = 0;
+            MostrarHuellas(null, null);
         }
     }
 }

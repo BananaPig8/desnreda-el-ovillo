@@ -1,211 +1,219 @@
 using System.Collections.Generic;
+using DesenredaElOvillo.Juego.Tres;
 using DesenredaElOvillo.Nucleo;
 using UnityEngine;
 
 namespace DesenredaElOvillo.Juego
 {
-    /// <summary>Capas de dibujo (sortingOrder). Todo es 2D con SpriteRenderer.</summary>
-    public static class Capas
-    {
-        public const int Mesa = -100;
-        public const int Tapete = -50;
-        public const int Casilla = 0;
-        public const int Resalte = 4;
-        public const int LanaSombra = 8;
-        public const int Lana = 10;
-        public const int Velcro = 14;
-        public const int Huella = 16;
-        public const int Herramienta = 20;
-        public const int Obstaculo = 30;
-        public const int Polilla = 40;
-        public const int Ovillo = 55;
-        public const int Efectos = 70;
-    }
-
-    /// <summary>Crea y mantiene la parte fija del tablero: mesa, tapete, casillas, objetos, entrada, carrete y Ovillo.</summary>
+    /// <summary>
+    /// El diorama fijo de la sala: mesa de madera, tapete acolchado, casillas de fieltro con volumen,
+    /// objetos del taller, agujero del rodapié, lámparas, el carrete (cuyo hilo es la vida) y Ovillo.
+    /// El tablero ocupa el plano XZ: casilla (x, y) → mundo (x + 0.5, altura, y + 0.5).
+    /// </summary>
     public sealed class VistaTablero : MonoBehaviour
     {
         private readonly List<GameObject> _objetos = new List<GameObject>();
-        private readonly List<SpriteRenderer> _brillos = new List<SpriteRenderer>();
-        private SpriteRenderer _carrete;
-        private SpriteRenderer _resalte;
-        private Transform _ovillo;
-        private SpriteRenderer _ovilloSprite;
-        private float _sustoHasta;
-        private float _saltoHasta;
-        private Vector3 _ovilloBase;
+        private readonly MaterialPropertyBlock _bloque = new MaterialPropertyBlock();
+        private Transform[] _casillas;
+        private Renderer[] _rendererCasillas;
+        private Color[] _colorCasillas;
+        private float[] _elevacion;
+        private Transform _carrete;
+        private int _vidaCarrete = -1;
         private float _temblorCarrete;
+        private Celda? _resaltada;
+        private Color _colorResalte;
+        private readonly List<Light> _lamparas = new List<Light>();
 
         public Tablero Tablero { get; private set; }
-        public Transform Ovillo => _ovillo;
-        public Vector3 PosicionCarrete => Tablero == null ? Vector3.zero : Mundo(Tablero.Salida);
+        public VistaOvillo Ovillo { get; private set; }
+
+        /// <summary>Centro de la cara superior de una casilla.</summary>
+        public static Vector3 Mundo(Celda c) => new Vector3(c.X + 0.5f, Medidas.AlturaCasilla, c.Y + 0.5f);
+
+        public Vector3 PosicionCarrete => Tablero == null ? Vector3.zero : Mundo(Tablero.Salida) + Vector3.up * 0.45f;
         public Vector3 PosicionEntrada => Tablero == null ? Vector3.zero : Mundo(Tablero.Entrada);
 
-        public static Vector3 Mundo(Celda c) => new Vector3(c.X + 0.5f, c.Y + 0.5f, 0f);
-
-        public bool CeldaEn(Vector3 mundo, out Celda celda)
+        /// <summary>Volumen que la cámara debe encuadrar (tablero + Ovillo + la altura de los objetos).</summary>
+        public Bounds Encuadre
         {
-            celda = new Celda(Mathf.FloorToInt(mundo.x), Mathf.FloorToInt(mundo.y));
-            return Tablero != null && Tablero.Dentro(celda);
+            get
+            {
+                if (Tablero == null) return new Bounds(new Vector3(4.5f, 0.3f, 4.5f), new Vector3(10, 1, 10));
+                var fuera = DireccionFuera(Tablero, Tablero.Salida);
+                var b = new Bounds(new Vector3(Tablero.Ancho / 2f, 0.35f, Tablero.Alto / 2f), new Vector3(Tablero.Ancho + 0.4f, 0.9f, Tablero.Alto + 0.4f));
+                b.Encapsulate(Mundo(Tablero.Salida) + fuera * 1.6f + Vector3.up * 0.9f);
+                return b;
+            }
         }
 
-        /// <summary>Rectángulo en mundo que la cámara debe encuadrar (tablero + Ovillo).</summary>
-        public Rect Encuadre => Tablero == null ? new Rect(0, 0, 9, 9) : new Rect(-0.6f, -0.6f, Tablero.Ancho + 2.4f, Tablero.Alto + 1.2f);
+        public bool CeldaBajo(Ray rayo, out Celda celda)
+        {
+            celda = default;
+            var plano = new Plane(Vector3.up, new Vector3(0, Medidas.AlturaCasilla, 0));
+            if (Tablero == null || !plano.Raycast(rayo, out float t)) return false;
+            var p = rayo.GetPoint(t);
+            celda = new Celda(Mathf.FloorToInt(p.x), Mathf.FloorToInt(p.z));
+            return Tablero.Dentro(celda);
+        }
+
+        public static Vector3 DireccionFuera(Tablero t, Celda c)
+        {
+            if (c.X == t.Ancho - 1) return Vector3.right;
+            if (c.X == 0) return Vector3.left;
+            if (c.Y == t.Alto - 1) return Vector3.forward;
+            return Vector3.back;
+        }
 
         public void Construir(Tablero tablero, int vida, int vidaMaxima)
         {
             Limpiar();
             Tablero = tablero;
+            int w = tablero.Ancho, h = tablero.Alto;
 
-            var mesa = Crear("Mesa", Texturas.Mesa(), Capas.Mesa, new Vector3(tablero.Ancho / 2f, tablero.Alto / 2f, 0));
-            mesa.transform.localScale = new Vector3((tablero.Ancho + 14) / 2f, (tablero.Alto + 10) / 2f, 1);
+            Instanciar(new Pieza { Nombre = "Mesa", Malla = CatalogoMallas.Caja(w + 16f, 0.5f, h + 14f, 0.08f), Material = "mesa", Color = Color.white }, new Vector3(w / 2f, -0.33f, h / 2f + 2f));
+            Instanciar(new Pieza { Nombre = "Tapete", Malla = CatalogoMallas.Caja(w + 0.55f, 0.08f, h + 0.55f, 0.04f), Material = "fieltro", Color = Paleta.MusgoOscuro }, new Vector3(w / 2f, -0.04f, h / 2f));
 
-            var tapete = Crear("Tapete", null, Capas.Tapete, new Vector3(tablero.Ancho / 2f, tablero.Alto / 2f, 0));
-            var sr = tapete.GetComponent<SpriteRenderer>();
-            sr.sprite = Texturas.Casilla(1);
-            sr.color = Paleta.MusgoOscuro;
-            tapete.transform.localScale = new Vector3(tablero.Ancho + 0.5f, tablero.Alto + 0.5f, 1);
-
-            for (int y = 0; y < tablero.Alto; y++)
+            int n = w * h;
+            _casillas = new Transform[n];
+            _rendererCasillas = new Renderer[n];
+            _colorCasillas = new Color[n];
+            _elevacion = new float[n];
+            var mallaCasilla = CatalogoMallas.Caja(0.92f, Medidas.AlturaCasilla, 0.92f, 0.05f);
+            for (int y = 0; y < h; y++)
             {
-                for (int x = 0; x < tablero.Ancho; x++)
+                for (int x = 0; x < w; x++)
                 {
                     var c = new Celda(x, y);
+                    int i = y * w + x;
+                    float variacion = Pintor.Ruido(x * 1.7f, y * 1.3f, 12);
+                    var color = Color.Lerp(Paleta.Musgo, Paleta.MusgoClaro, variacion * 0.45f + ((x + y) % 2) * 0.08f);
+                    var casilla = Instanciar(new Pieza { Nombre = "Casilla " + c, Malla = mallaCasilla, Material = "casilla", Color = color },
+                        new Vector3(x + 0.5f, Medidas.AlturaCasilla / 2f, y + 0.5f));
+                    casilla.transform.localRotation = Quaternion.Euler(0, (variacion - 0.5f) * 3f, 0);
+                    _casillas[i] = casilla.transform;
+                    _rendererCasillas[i] = casilla.GetComponent<Renderer>();
+                    _colorCasillas[i] = color;
+
                     var tipo = tablero.Tipo(c);
-                    var casilla = Crear("Casilla " + c, Texturas.Casilla((x + y) % 2), Capas.Casilla, Mundo(c));
-                    float tinte = 0.94f + 0.08f * Pintor.Ruido(x * 1.7f, y * 1.3f, 12);
-                    casilla.GetComponent<SpriteRenderer>().color = new Color(tinte, tinte, tinte, 1);
-                    switch (tipo)
+                    float giro = (Pintor.Ruido(x * 3.1f, y * 2.7f, 5) - 0.5f) * 40f;
+                    if (tipo == TipoCasilla.Obstaculo)
                     {
-                        case TipoCasilla.Obstaculo:
-                            Crear("Obstáculo " + c, Texturas.Obstaculo(tablero.Simbolo(c)), Capas.Obstaculo - y, Mundo(c) + new Vector3(0, 0.05f, 0));
-                            break;
-                        case TipoCasilla.Lampara:
-                            var brillo = Crear("Brillo lámpara", Texturas.Brillo(), Capas.Resalte, Mundo(c));
-                            brillo.transform.localScale = Vector3.one * 3.2f;
-                            var bsr = brillo.GetComponent<SpriteRenderer>();
-                            bsr.color = Paleta.ConAlfa(Paleta.Hex("#FFE8A0"), 0.45f);
-                            _brillos.Add(bsr);
-                            Crear("Lámpara " + c, Texturas.Lampara(), Capas.Obstaculo - y, Mundo(c) + new Vector3(0, 0.08f, 0));
-                            break;
-                        case TipoCasilla.Entrada:
-                            Crear("Entrada", Texturas.Entrada(), Capas.Obstaculo - y, Mundo(c));
-                            break;
+                        var o = Instanciar(Modelos.Obstaculo(tablero.Simbolo(c)), Mundo(c));
+                        o.transform.localRotation = Quaternion.Euler(0, tablero.Simbolo(c) == '#' ? giro * 0.15f : giro, 0);
+                    }
+                    else if (tipo == TipoCasilla.Lampara)
+                    {
+                        Instanciar(Modelos.Lampara(), Mundo(c));
+                        _lamparas.Add(Iluminacion.LuzDeLampara(transform, Mundo(c) + Vector3.up * 0.5f));
+                    }
+                    else if (tipo == TipoCasilla.Entrada)
+                    {
+                        Instanciar(Modelos.Entrada(DireccionFuera(tablero, c)), Mundo(c));
                     }
                 }
             }
 
-            var carrete = Crear("Carrete", Texturas.Carrete(vida, vidaMaxima), Capas.Obstaculo + 5, Mundo(tablero.Salida) + new Vector3(0, 0.12f, 0));
-            _carrete = carrete.GetComponent<SpriteRenderer>();
+            ActualizarCarrete(vida, vidaMaxima, false);
 
-            var resalte = Crear("Resalte", Texturas.Casilla(0), Capas.Resalte, Vector3.zero);
-            _resalte = resalte.GetComponent<SpriteRenderer>();
-            _resalte.enabled = false;
+            var fueraSalida = DireccionFuera(tablero, tablero.Salida);
+            Ovillo = VistaOvillo.Crear(transform, Mundo(tablero.Salida) + fueraSalida * 1.05f + Vector3.back * 0.25f - Vector3.up * (Medidas.AlturaCasilla + 0.08f));
+            _objetos.Add(Ovillo.gameObject);
 
-            var ovillo = Crear("Ovillo", Texturas.Ovillo(), Capas.Ovillo, Vector3.zero);
-            _ovillo = ovillo.transform;
-            _ovilloSprite = ovillo.GetComponent<SpriteRenderer>();
-            _ovilloBase = Mundo(tablero.Salida) + DireccionFuera(tablero) * 1.05f + new Vector3(0, -0.45f, 0);
-            _ovillo.position = _ovilloBase;
-            _ovilloSprite.flipX = DireccionFuera(tablero).x > 0;
+            foreach (var d in Decorado.Disponer(w, h, 7))
+            {
+                var go = Instanciar(d.Pieza, d.Posicion + Vector3.up * -0.08f);
+                go.transform.localRotation = Quaternion.Euler(0, d.Giro, 0) * go.transform.localRotation;
+            }
         }
 
-        private static Vector3 DireccionFuera(Tablero t)
+        private GameObject Instanciar(Pieza pieza, Vector3 posicion)
         {
-            var s = t.Salida;
-            if (s.X == t.Ancho - 1) return Vector3.right;
-            if (s.X == 0) return Vector3.left;
-            if (s.Y == t.Alto - 1) return Vector3.up;
-            return Vector3.down;
+            var modelo = Constructor.Instanciar(pieza, transform);
+            modelo.Raiz.position = posicion;
+            _objetos.Add(modelo.Raiz.gameObject);
+            return modelo.Raiz.gameObject;
         }
 
         public void ActualizarCarrete(int vida, int vidaMaxima, bool golpe)
         {
-            if (_carrete == null) return;
-            _carrete.sprite = Texturas.Carrete(Mathf.Max(0, vida), vidaMaxima);
+            if (Tablero == null) return;
+            vida = Mathf.Max(0, vida);
+            if (vida != _vidaCarrete || _carrete == null)
+            {
+                if (_carrete != null)
+                {
+                    _objetos.Remove(_carrete.gameObject);
+                    Destroy(_carrete.gameObject);
+                }
+                var modelo = Constructor.Instanciar(Modelos.Carrete(vidaMaxima <= 0 ? 0 : (float)vida / vidaMaxima), transform);
+                _carrete = modelo.Raiz;
+                _carrete.position = Mundo(Tablero.Salida);
+                _objetos.Add(_carrete.gameObject);
+                _vidaCarrete = vida;
+            }
             if (golpe)
             {
-                _temblorCarrete = 0.4f;
-                Asustar(0.9f);
+                _temblorCarrete = 0.45f;
+                if (Ovillo != null) Ovillo.Asustar(0.9f);
             }
         }
 
         public void Resaltar(Celda? celda, Color color)
         {
-            if (_resalte == null) return;
-            _resalte.enabled = celda.HasValue;
-            if (!celda.HasValue) return;
-            _resalte.transform.position = Mundo(celda.Value);
-            _resalte.color = color;
+            _resaltada = celda;
+            _colorResalte = color;
         }
 
-        public void Asustar(float segundos) => _sustoHasta = Time.time + segundos;
-        public void Saltar(float segundos) => _saltoHasta = Time.time + segundos;
+        public void Asustar(float s) { if (Ovillo != null) Ovillo.Asustar(s); }
+        public void Saltar(float s) { if (Ovillo != null) Ovillo.Saltar(s); }
 
         private void Update()
         {
-            if (_ovillo != null)
+            if (Tablero == null || _casillas == null) return;
+            float dt = Time.deltaTime;
+            for (int i = 0; i < _casillas.Length; i++)
             {
-                float t = Time.time;
-                var pos = _ovilloBase;
-                var escala = new Vector3(1, 1, 1);
-                if (t < _sustoHasta)
+                var c = new Celda(i % Tablero.Ancho, i / Tablero.Ancho);
+                bool activa = _resaltada.HasValue && _resaltada.Value == c;
+                float objetivo = activa ? 0.05f : 0f;
+                float antes = _elevacion[i];
+                _elevacion[i] = Mathf.MoveTowards(_elevacion[i], objetivo, dt * 0.6f);
+                if (Mathf.Abs(antes - _elevacion[i]) > 1e-5f || activa)
                 {
-                    pos += new Vector3(Mathf.Sin(t * 60f) * 0.03f, 0, 0);
+                    var t = _casillas[i];
+                    t.position = new Vector3(t.position.x, Medidas.AlturaCasilla / 2f + _elevacion[i], t.position.z);
+                    var col = activa ? Color.Lerp(_colorCasillas[i], new Color(_colorResalte.r, _colorResalte.g, _colorResalte.b), _colorResalte.a) : _colorCasillas[i];
+                    Materiales.Tenir(_rendererCasillas[i], col, _bloque);
                 }
-                else if (t < _saltoHasta)
+                else if (_elevacion[i] <= 0f && antes > 0f)
                 {
-                    float fase = Mathf.Abs(Mathf.Sin(t * 9f));
-                    pos += new Vector3(0, fase * 0.35f, 0);
-                    escala = new Vector3(1f + (1 - fase) * 0.08f, 1f - (1 - fase) * 0.08f, 1);
+                    Materiales.Tenir(_rendererCasillas[i], _colorCasillas[i], _bloque);
                 }
-                else
-                {
-                    float respira = Mathf.Sin(t * 2.2f);
-                    escala = new Vector3(1f + respira * 0.015f, 1f - respira * 0.02f, 1);
-                }
-                _ovillo.position = pos;
-                _ovillo.localScale = escala;
             }
             if (_carrete != null)
             {
-                var basePos = Mundo(Tablero.Salida) + new Vector3(0, 0.12f, 0);
+                var basePos = Mundo(Tablero.Salida);
                 if (_temblorCarrete > 0)
                 {
-                    _temblorCarrete -= Time.deltaTime;
-                    basePos += new Vector3(Mathf.Sin(Time.time * 70f) * 0.06f * _temblorCarrete / 0.4f, 0, 0);
+                    _temblorCarrete -= dt;
+                    basePos += new Vector3(Mathf.Sin(Time.time * 70f) * 0.05f * _temblorCarrete / 0.45f, 0, 0);
                 }
-                _carrete.transform.position = basePos;
+                _carrete.position = basePos;
             }
-            foreach (var b in _brillos)
-            {
-                if (b == null) continue;
-                float a = 0.38f + 0.1f * Mathf.Sin(Time.time * 2.5f);
-                b.color = Paleta.ConAlfa(b.color, a);
-            }
-        }
-
-        private GameObject Crear(string nombre, Sprite sprite, int orden, Vector3 posicion)
-        {
-            var go = new GameObject(nombre);
-            go.transform.SetParent(transform, false);
-            go.transform.position = posicion;
-            var sr = go.AddComponent<SpriteRenderer>();
-            Texturas.PrepararRenderer(sr);
-            sr.sprite = sprite;
-            sr.sortingOrder = orden;
-            _objetos.Add(go);
-            return go;
+            foreach (var l in _lamparas) if (l != null) l.intensity = 1.5f + Mathf.Sin(Time.time * 2.3f) * 0.08f + Mathf.Sin(Time.time * 7.1f) * 0.04f;
         }
 
         public void Limpiar()
         {
             foreach (var go in _objetos) if (go != null) Destroy(go);
+            foreach (var l in _lamparas) if (l != null) Destroy(l.gameObject);
             _objetos.Clear();
-            _brillos.Clear();
+            _lamparas.Clear();
             _carrete = null;
-            _resalte = null;
-            _ovillo = null;
+            _vidaCarrete = -1;
+            _casillas = null;
+            Ovillo = null;
             Tablero = null;
         }
     }

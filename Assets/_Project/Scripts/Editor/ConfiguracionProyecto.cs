@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using DesenredaElOvillo.Juego;
@@ -5,6 +6,7 @@ using DesenredaElOvillo.Nucleo;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
 namespace DesenredaElOvillo.Editor
@@ -18,6 +20,7 @@ namespace DesenredaElOvillo.Editor
     {
         public const string RutaEscena = "Assets/_Project/Escenas/Juego.unity";
         private const string CarpetaSalas = "Assets/_Project/Resources/Salas";
+        private const string CarpetaMateriales = "Assets/_Project/Resources/Materiales";
 
         static ConfiguracionProyecto()
         {
@@ -39,6 +42,8 @@ namespace DesenredaElOvillo.Editor
                 }
             }
             AsegurarEscenaEnBuild();
+            AsegurarPlantillasDeMaterial();
+            ComprobarURP();
             if (PlayerSettings.productName != "Desenreda el Ovillo")
             {
                 PlayerSettings.productName = "Desenreda el Ovillo";
@@ -46,8 +51,58 @@ namespace DesenredaElOvillo.Editor
                 PlayerSettings.defaultScreenHeight = 1080;
                 PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
                 PlayerSettings.resizableWindow = true;
-                EditorSettings.defaultBehaviorMode = EditorBehaviorMode.Mode2D;
+                PlayerSettings.colorSpace = ColorSpace.Linear;
             }
+        }
+
+        /// <summary>
+        /// Plantillas de material en Resources: garantizan que el shader iluminado del pipeline activo y sus
+        /// variantes (mapa de normales, emisión) entran en la build, aunque los materiales se creen por código.
+        /// </summary>
+        [MenuItem("Desenreda el Ovillo/Regenerar plantillas de material", priority = 21)]
+        public static void AsegurarPlantillasDeMaterial()
+        {
+            bool urp = GraphicsSettings.currentRenderPipeline != null;
+            var shader = urp ? Shader.Find("Universal Render Pipeline/Lit") : Shader.Find("Standard");
+            if (shader == null) return;
+            Directory.CreateDirectory(CarpetaMateriales);
+            CrearPlantilla("Base", shader, m => m.EnableKeyword("_NORMALMAP"));
+            CrearPlantilla("Emisivo", shader, m =>
+            {
+                m.EnableKeyword("_EMISSION");
+                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            });
+        }
+
+        private static void CrearPlantilla(string nombre, Shader shader, Action<Material> configurar)
+        {
+            string ruta = CarpetaMateriales + "/" + nombre + ".mat";
+            var existente = AssetDatabase.LoadAssetAtPath<Material>(ruta);
+            if (existente != null && existente.shader == shader) return;
+            if (existente != null) AssetDatabase.DeleteAsset(ruta);
+            var m = new Material(shader) { name = nombre };
+            configurar(m);
+            AssetDatabase.CreateAsset(m, ruta);
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// El aspecto final necesita URP. Si el paquete está pero no hay un asset de pipeline asignado, se avisa
+        /// (la forma más fiable es crear el proyecto con la plantilla "Universal 3D" de Unity 6).
+        /// </summary>
+        private static void ComprobarURP()
+        {
+            if (SessionState.GetBool("ovillo.avisoURP", false)) return;
+            SessionState.SetBool("ovillo.avisoURP", true);
+#if OVILLO_URP
+            if (GraphicsSettings.currentRenderPipeline == null)
+                Debug.LogWarning("Desenreda el Ovillo: URP está instalado pero no hay ningún URP Asset asignado. " +
+                                 "Crea uno (Assets > Create > Rendering > URP Asset (with Universal Renderer)) y asígnalo en " +
+                                 "Project Settings > Graphics. Mientras tanto el juego se ve con el pipeline integrado.");
+#else
+            Debug.Log("Desenreda el Ovillo: el proyecto no usa URP. El juego funciona, pero el acabado de maqueta " +
+                      "(desenfoque de fondo, bloom, gradación) necesita URP: ver README > Abrir el proyecto.");
+#endif
         }
 
         [MenuItem("Desenreda el Ovillo/Abrir escena de juego", priority = 0)]

@@ -3,7 +3,9 @@
     "rootNamespace": "DesenredaElOvillo.Editor",
     "references": [
         "DesenredaElOvillo.Nucleo",
-        "DesenredaElOvillo.Juego"
+        "DesenredaElOvillo.Juego",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [
         "Editor"
@@ -14,6 +16,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "1.0.0",
+            "define": "OVILLO_URP"
+        }
+    ],
     "noEngineReferences": false
 }

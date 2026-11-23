@@ -1,25 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
+using DesenredaElOvillo.Juego.Tres;
 using DesenredaElOvillo.Nucleo;
 using UnityEngine;
 
 namespace DesenredaElOvillo.Juego
 {
-    /// <summary>Herramientas cosidas sobre la lana, con sus usos como puntadas de colores debajo.</summary>
+    /// <summary>
+    /// Herramientas de costura en 3D sobre la lana. Los usos se ven como cuentas de colores junto a cada
+    /// herramienta (mostaza = puede atrapar otra polilla; marrón = gastada). Cada tipo tiene su animación:
+    /// el alfiler pincha, las tijeras cortan, el botón rebota, la bobina gira y el velcro se aplasta.
+    /// </summary>
     public sealed class VistaHerramientas : MonoBehaviour
     {
-        private sealed class Pieza
+        private sealed class Pieza3D
         {
             public TipoHerramienta Tipo;
             public int Indice;
-            public SpriteRenderer Sprite;
-            public SpriteRenderer Sombra;
-            public readonly List<SpriteRenderer> Usos = new List<SpriteRenderer>();
-            public int UsosMaximos;
-            public bool Doblada;
+            public ModeloInstanciado Modelo;
+            public readonly List<Renderer> Usos = new List<Renderer>();
         }
 
-        private readonly List<Pieza> _piezas = new List<Pieza>();
+        private readonly List<Pieza3D> _piezas = new List<Pieza3D>();
+        private readonly MaterialPropertyBlock _bloque = new MaterialPropertyBlock();
+        private static readonly Color ColorUso = Paleta.Mostaza;
+        private static readonly Color ColorUsoVelcro = Paleta.AzulSuave;
+        private static readonly Color ColorGastado = Paleta.Hex("#4A2E1E");
 
         public void Dibujar(Recorrido r, PlanColocacion plan, Reglas reglas)
         {
@@ -28,111 +34,129 @@ namespace DesenredaElOvillo.Juego
             foreach (var c in plan.Colocaciones)
             {
                 if (c.Indice <= 0 || c.Indice >= r.Cantidad) continue;
-                var def = reglas.Herramienta(c.Tipo);
-                var pos = VistaTablero.Mundo(r.Celdas[c.Indice]);
-                var p = new Pieza { Tipo = c.Tipo, Indice = c.Indice, UsosMaximos = def.Usos };
+                var celda = r.Celdas[c.Indice];
                 bool debajo = PlanColocacion.VaDebajo(c.Tipo);
-                p.Sprite = Crear(c.Tipo.ToString(), Texturas.Herramienta(c.Tipo), debajo ? Capas.Velcro : Capas.Herramienta, pos);
-                p.Sprite.transform.localScale = Vector3.one * (debajo ? 0.86f : 0.76f);
-                if (!debajo)
-                {
-                    p.Sombra = Crear("Sombra", Texturas.Herramienta(c.Tipo), Capas.Herramienta - 1, pos + new Vector3(0.04f, -0.05f, 0));
-                    p.Sombra.color = new Color(0, 0, 0, 0.3f);
-                    p.Sombra.transform.localScale = Vector3.one * 0.76f;
-                }
-                float y = debajo ? -0.4f : -0.32f;
-                float x0 = (debajo ? 0.18f : -0.18f) - (def.Usos - 1) * 0.06f;
+                var modelo = Constructor.Instanciar(Modelos.Herramienta(c.Tipo), transform);
+                // Encima de la lana (el velcro, debajo: la lana pasa por encima).
+                float altura = debajo ? Medidas.AlturaCasilla : Medidas.AlturaLana + Medidas.RadioLana * 0.55f;
+                modelo.Raiz.position = new Vector3(celda.X + 0.5f, altura, celda.Y + 0.5f);
+                var p = new Pieza3D { Tipo = c.Tipo, Indice = c.Indice, Modelo = modelo };
+                var def = reglas.Herramienta(c.Tipo);
                 for (int u = 0; u < def.Usos; u++)
                 {
-                    var punto = Crear("Uso", Texturas.Circulo(), Capas.Herramienta + 2, pos + new Vector3(x0 + u * 0.12f, y, 0));
-                    punto.transform.localScale = Vector3.one * 0.16f;
-                    punto.color = debajo ? Paleta.AzulSuave : Paleta.Mostaza;
-                    p.Usos.Add(punto);
+                    var cuenta = Constructor.Instanciar(new Pieza { Nombre = "Uso", Malla = "esfera_baja", Material = "lana", Color = debajo ? ColorUsoVelcro : ColorUso, Escala = Vector3.one * 0.085f }, transform);
+                    float x = debajo ? 0.38f : -0.38f;
+                    cuenta.Raiz.position = new Vector3(celda.X + 0.5f + x, Medidas.AlturaCasilla + 0.045f, celda.Y + 0.5f - 0.36f + u * 0.11f);
+                    p.Usos.Add(cuenta.Renderers[0]);
                 }
                 _piezas.Add(p);
             }
         }
 
-        private Pieza Buscar(int indice, TipoHerramienta tipo)
+        private Pieza3D Buscar(int indice, TipoHerramienta tipo)
         {
             foreach (var p in _piezas) if (p.Indice == indice && p.Tipo == tipo) return p;
             return null;
         }
 
-        /// <summary>Animación de activación y actualización de las puntadas de usos.</summary>
         public void Activar(int indice, TipoHerramienta tipo, int usosRestantes)
         {
             var p = Buscar(indice, tipo);
             if (p == null) return;
             for (int u = 0; u < p.Usos.Count; u++)
-                p.Usos[u].color = u < usosRestantes ? (PlanColocacion.VaDebajo(tipo) ? Paleta.AzulSuave : Paleta.Mostaza) : new Color(0.25f, 0.18f, 0.12f, 0.8f);
-            StartCoroutine(Rebote(p.Sprite.transform, PlanColocacion.VaDebajo(tipo) ? 0.86f : 0.76f));
+                Materiales.Tenir(p.Usos[u], u < usosRestantes ? (PlanColocacion.VaDebajo(tipo) ? ColorUsoVelcro : ColorUso) : ColorGastado, _bloque);
+            StartCoroutine(Animar(p));
         }
 
         public void Gastar(int indice, TipoHerramienta tipo)
         {
             var p = Buscar(indice, tipo);
             if (p == null) return;
-            p.Doblada = true;
             if (tipo == TipoHerramienta.Alfiler)
             {
-                p.Sprite.sprite = Texturas.Herramienta(tipo, true);
-                if (p.Sombra != null) p.Sombra.sprite = p.Sprite.sprite;
+                // El alfiler se dobla: sigue clavado (pincha a sus polillas quietas) pero ya no atrapa nuevas.
+                var aguja = p.Modelo.Primero("aguja");
+                if (aguja != null) aguja.localRotation = Quaternion.Euler(55, 0, -40);
             }
-            else
-            {
-                p.Sprite.color = new Color(1, 1, 1, 0.45f);
-                if (p.Sombra != null) p.Sombra.enabled = false;
-            }
+            p.Modelo.Destello(Paleta.GrisFieltro, 0.55f);
         }
 
         public void Devorar(int indice, TipoHerramienta tipo)
         {
             var p = Buscar(indice, tipo);
-            if (p == null) return;
-            StartCoroutine(Encoger(p));
+            if (p != null) StartCoroutine(Encoger(p));
         }
 
-        private IEnumerator Rebote(Transform t, float escala)
+        private IEnumerator Animar(Pieza3D p)
         {
-            float d = 0.18f;
-            for (float e = 0; e < d; e += Time.deltaTime)
+            var raiz = p.Modelo.Raiz;
+            float d = 0.22f;
+            switch (p.Tipo)
             {
-                if (t == null) yield break;
-                float k = 1f + Mathf.Sin(e / d * Mathf.PI) * 0.35f;
-                t.localScale = new Vector3(escala * k, escala * (2f - k), 1);
-                yield return null;
+                case TipoHerramienta.Tijeras:
+                {
+                    var a = p.Modelo.Primero("hoja_a");
+                    var b = p.Modelo.Primero("hoja_b");
+                    for (float e = 0; e < d; e += Time.deltaTime)
+                    {
+                        float k = Mathf.Sin(e / d * Mathf.PI);
+                        if (a != null) a.localRotation = Quaternion.Euler(0, 10 - k * 10, 0);
+                        if (b != null) b.localRotation = Quaternion.Euler(0, -10 + k * 10, 0);
+                        yield return null;
+                    }
+                    break;
+                }
+                case TipoHerramienta.Boton:
+                {
+                    var boton = p.Modelo.Primero("boton");
+                    for (float e = 0; e < d * 1.6f; e += Time.deltaTime)
+                    {
+                        float k = e / (d * 1.6f);
+                        if (boton != null) boton.localPosition = new Vector3(0, 0.19f - Mathf.Sin(k * Mathf.PI) * 0.1f + Mathf.Sin(k * Mathf.PI * 3f) * 0.03f * (1 - k), 0);
+                        yield return null;
+                    }
+                    if (boton != null) boton.localPosition = new Vector3(0, 0.19f, 0);
+                    break;
+                }
+                case TipoHerramienta.Bobina:
+                {
+                    var bobina = p.Modelo.Primero("bobina");
+                    for (float e = 0; e < d * 2f; e += Time.deltaTime)
+                    {
+                        if (bobina != null) bobina.Rotate(0, 900f * Time.deltaTime, 0);
+                        yield return null;
+                    }
+                    break;
+                }
+                default:
+                {
+                    var escala = raiz.localScale;
+                    for (float e = 0; e < d; e += Time.deltaTime)
+                    {
+                        float k = Mathf.Sin(e / d * Mathf.PI);
+                        raiz.localScale = new Vector3(escala.x * (1 + k * 0.15f), escala.y * (1 - k * 0.25f), escala.z * (1 + k * 0.15f));
+                        yield return null;
+                    }
+                    raiz.localScale = escala;
+                    break;
+                }
             }
-            if (t != null) t.localScale = Vector3.one * escala;
         }
 
-        private IEnumerator Encoger(Pieza p)
+        private IEnumerator Encoger(Pieza3D p)
         {
+            var raiz = p.Modelo.Raiz;
+            var inicial = raiz.localScale;
             float d = 0.35f;
-            var inicial = p.Sprite.transform.localScale;
             for (float e = 0; e < d; e += Time.deltaTime)
             {
-                if (p.Sprite == null) yield break;
-                float k = 1f - e / d;
-                p.Sprite.transform.localScale = inicial * k;
-                p.Sprite.transform.Rotate(0, 0, 720 * Time.deltaTime);
+                if (raiz == null) yield break;
+                raiz.localScale = inicial * (1f - e / d);
+                raiz.Rotate(0, 720 * Time.deltaTime, 0);
                 yield return null;
             }
-            if (p.Sprite != null) p.Sprite.enabled = false;
-            if (p.Sombra != null) p.Sombra.enabled = false;
-            foreach (var u in p.Usos) if (u != null) u.enabled = false;
-        }
-
-        private SpriteRenderer Crear(string nombre, Sprite sprite, int orden, Vector3 pos)
-        {
-            var go = new GameObject(nombre);
-            go.transform.SetParent(transform, false);
-            go.transform.position = pos;
-            var sr = go.AddComponent<SpriteRenderer>();
-            Texturas.PrepararRenderer(sr);
-            sr.sprite = sprite;
-            sr.sortingOrder = orden;
-            return sr;
+            if (raiz != null) raiz.gameObject.SetActive(false);
+            foreach (var u in p.Usos) if (u != null) u.gameObject.SetActive(false);
         }
 
         public void Limpiar()

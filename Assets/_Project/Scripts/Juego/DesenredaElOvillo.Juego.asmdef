@@ -3,7 +3,9 @@
     "rootNamespace": "DesenredaElOvillo.Juego",
     "references": [
         "DesenredaElOvillo.Nucleo",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -17,6 +19,11 @@
             "name": "com.unity.inputsystem",
             "expression": "1.0.0",
             "define": "OVILLO_INPUT_SYSTEM"
+        },
+        {
+            "name": "com.unity.render-pipelines.universal",
+            "expression": "1.0.0",
+            "define": "OVILLO_URP"
         }
     ],
     "noEngineReferences": false

@@ -174,7 +174,7 @@ namespace DesenredaElOvillo.Juego
             switch (_paginaAyuda)
             {
                 case 0:
-                    GUI.DrawTexture(new Rect(cuerpo.x, cuerpo.y + 20, 360, 360), Tex(Texturas.Ovillo()), ScaleMode.ScaleToFit);
+                    GUI.DrawTexture(new Rect(cuerpo.x, cuerpo.y + 20, 360, 360), Tex(Iconos.Ovillo()), ScaleMode.ScaleToFit);
                     GUI.Label(new Rect(cuerpo.x + 400, cuerpo.y, cuerpo.width - 400, 600),
                         "Las polillas han invadido el taller de costura y quieren comerse el carrete que Ovillo protege.\n\n" +
                         "Ovillo no lucha: TÚ tejes con su lana el camino que las polillas están obligadas a recorrer, " +
@@ -200,7 +200,7 @@ namespace DesenredaElOvillo.Juego
                     foreach (TipoHerramienta t in Enum.GetValues(typeof(TipoHerramienta)))
                     {
                         var def = reglas.Herramienta(t);
-                        GUI.DrawTexture(new Rect(cuerpo.x, y, 80, 80), Tex(Texturas.Herramienta(t)), ScaleMode.ScaleToFit);
+                        GUI.DrawTexture(new Rect(cuerpo.x, y, 80, 80), Tex(Iconos.Herramienta(t)), ScaleMode.ScaleToFit);
                         GUI.Label(new Rect(cuerpo.x + 100, y + 2, 400, 40), def.Nombre + "  ·  " + Categoria(def.Categoria), _e.Subtitulo);
                         GUI.Label(new Rect(cuerpo.x + 100, y + 42, cuerpo.width - 100, 60), def.Descripcion + "  (" + Ficha(def) + ")", _e.TextoPequeno);
                         y += 96;
@@ -216,7 +216,7 @@ namespace DesenredaElOvillo.Juego
                         var def = reglas.Polilla(tipos[i]);
                         var x = cuerpo.x + i * (ancho + 20);
                         Panel(new Rect(x, cuerpo.y, ancho, 600), _e.Tarjeta);
-                        var retrato = Texturas.Retrato(tipos[i]);
+                        var retrato = Iconos.Retrato(tipos[i]);
                         if (retrato != null) GUI.DrawTexture(new Rect(x + 20, cuerpo.y + 20, ancho - 40, 250), retrato, ScaleMode.ScaleToFit);
                         GUI.Label(new Rect(x + 16, cuerpo.y + 280, ancho - 32, 300), FichaPolilla(def), _e.TextoPequeno);
                     }
@@ -269,7 +269,7 @@ namespace DesenredaElOvillo.Juego
                 if (Boton(b, "", actual ? _e.Boton : _e.BotonSecundario)) Ajustes.ColorLana = i;
                 var antes = GUI.color;
                 GUI.color = Paleta.ColoresLana[i];
-                GUI.DrawTexture(new Rect(b.x + 36, b.y + 12, 48, 36), Tex(Texturas.PiezaLana(Texturas.Derecha | Texturas.Izquierda)), ScaleMode.StretchToFill);
+                GUI.DrawTexture(new Rect(b.x + 36, b.y + 12, 48, 36), Tex(Iconos.PiezaLana(Iconos.Derecha | Iconos.Izquierda)), ScaleMode.StretchToFill);
                 GUI.color = antes;
                 if (Sobre(b)) _ayudaEmergente = Paleta.NombresColoresLana[i] + ". La crema es la que mejor se distingue del tablero para todo tipo de visión del color.";
             }
@@ -329,13 +329,13 @@ namespace DesenredaElOvillo.Juego
         {
             var r = new Rect(20, 14, W - 40, 112);
             Panel(r, _e.PanelOscuro);
-            GUI.DrawTexture(new Rect(r.x + 24, r.y + 8, 96, 96), Tex(Texturas.Ovillo()), ScaleMode.ScaleToFit);
+            GUI.DrawTexture(new Rect(r.x + 24, r.y + 8, 96, 96), Tex(Iconos.Ovillo()), ScaleMode.ScaleToFit);
             GUI.Label(new Rect(r.x + 134, r.y + 14, 260, 40), "Carrete", _e.SubtituloClaro);
             int vida = C.EnOleada ? C.Reproductor.VidaCarreteMostrada : p.VidaCarrete;
             int maximo = C.ReglasBase.VidaCarreteMaxima;
             for (int i = 0; i < maximo; i++)
             {
-                var spr = Texturas.Carrete(i < vida ? 1 : 0, 1);
+                var spr = Iconos.Carrete(i < vida ? 1 : 0, 1);
                 var antes = GUI.color;
                 if (i >= vida) GUI.color = new Color(1, 1, 1, 0.45f);
                 GUI.DrawTexture(new Rect(r.x + 134 + i * 52, r.y + 52, 50, 50), Tex(spr), ScaleMode.ScaleToFit);
@@ -353,7 +353,7 @@ namespace DesenredaElOvillo.Juego
             var hilo = new Rect(r.xMax - 420, r.y + 10, 400, 92);
             var colorAntes = GUI.color;
             GUI.color = Paleta.ColoresLana[Ajustes.ColorLana];
-            GUI.DrawTexture(new Rect(hilo.x, hilo.y + 4, 84, 84), Tex(Texturas.PiezaLana(Texturas.Arriba)), ScaleMode.ScaleToFit);
+            GUI.DrawTexture(new Rect(hilo.x, hilo.y + 4, 84, 84), Tex(Iconos.PiezaLana(Iconos.Arriba)), ScaleMode.ScaleToFit);
             GUI.color = colorAntes;
             GUI.Label(new Rect(hilo.x + 96, hilo.y, 300, 52), "Hilo  " + (total - usado) + " / " + total, _e.Contador);
             GUI.Label(new Rect(hilo.x + 96, hilo.y + 52, 300, 36),
@@ -382,7 +382,7 @@ namespace DesenredaElOvillo.Juego
                 bool activo = p.Fase == FasePartida.Preparacion && !C.EnOleada;
                 if (GUI.Button(fila, GUIContent.none, seleccionada ? _e.TarjetaMarcada : _e.Tarjeta) && activo)
                     C.Seleccionar(seleccionada ? (TipoHerramienta?)null : t);
-                GUI.DrawTexture(new Rect(fila.x + 10, fila.y + 8, 76, 76), Tex(Texturas.Herramienta(t)), ScaleMode.ScaleToFit);
+                GUI.DrawTexture(new Rect(fila.x + 10, fila.y + 8, 76, 76), Tex(Iconos.Herramienta(t)), ScaleMode.ScaleToFit);
                 var def = p.Reglas.Herramienta(t);
                 GUI.Label(new Rect(fila.x + 94, fila.y + 10, 190, 36), def.Nombre, _e.TextoNegrita);
                 GUI.Label(new Rect(fila.x + 94, fila.y + 46, 190, 34), libres + " de " + total + " libres", _e.TextoPequeno);
@@ -411,7 +411,7 @@ namespace DesenredaElOvillo.Juego
             foreach (var a in sala.Oleada.Apariciones)
             {
                 var celda = new Rect(x + (i % 4) * 74, y + (i / 4) * 90, 68, 84);
-                var retrato = Texturas.Retrato(a.Tipo);
+                var retrato = Iconos.Retrato(a.Tipo);
                 if (retrato != null) GUI.DrawTexture(new Rect(celda.x, celda.y, 68, 64), retrato, ScaleMode.ScaleAndCrop);
                 GUI.Label(new Rect(celda.x, celda.y + 62, 68, 24), "T" + a.Turno, _e.TextoMini);
                 if (Sobre(celda)) _ayudaEmergente = FichaPolilla(p.Reglas.Polilla(a.Tipo)) + "\nEntra en el turno " + a.Turno + ".";
@@ -554,7 +554,7 @@ namespace DesenredaElOvillo.Juego
                     else if (_marcadas.Count < elegir) _marcadas.Add(i);
                     Sonidos.Tocar(Sonido.Clic);
                 }
-                GUI.DrawTexture(new Rect(tarjeta.center.x - 80, tarjeta.y + 30, 160, 160), Tex(Texturas.Herramienta(t)), ScaleMode.ScaleToFit);
+                GUI.DrawTexture(new Rect(tarjeta.center.x - 80, tarjeta.y + 30, 160, 160), Tex(Iconos.Herramienta(t)), ScaleMode.ScaleToFit);
                 GUI.Label(new Rect(tarjeta.x, tarjeta.y + 200, ancho, 44), def.Nombre, _e.Subtitulo);
                 GUI.Label(new Rect(tarjeta.x, tarjeta.y + 244, ancho, 34), Categoria(def.Categoria), _e.TextoCentrado);
                 GUI.Label(new Rect(tarjeta.x + 26, tarjeta.y + 286, ancho - 52, 130), def.Descripcion, _e.TextoPequenoCentrado);
@@ -590,8 +590,8 @@ namespace DesenredaElOvillo.Juego
                     C.ElegirMejora(m.Tipo);
                     return;
                 }
-                Texture2D icono = m.Herramienta.HasValue ? Tex(Texturas.Herramienta(m.Herramienta.Value))
-                    : m.Tipo == TipoMejora.OvilloGrande ? Tex(Texturas.Ovillo()) : Tex(Texturas.Carrete(1, 1));
+                Texture2D icono = m.Herramienta.HasValue ? Tex(Iconos.Herramienta(m.Herramienta.Value))
+                    : m.Tipo == TipoMejora.OvilloGrande ? Tex(Iconos.Ovillo()) : Tex(Iconos.Carrete(1, 1));
                 GUI.DrawTexture(new Rect(tarjeta.center.x - 80, tarjeta.y + 34, 160, 160), icono, ScaleMode.ScaleToFit);
                 GUI.Label(new Rect(tarjeta.x, tarjeta.y + 214, ancho, 50), m.Nombre, _e.Subtitulo);
                 GUI.Label(new Rect(tarjeta.x + 26, tarjeta.y + 274, ancho - 52, 150), m.Descripcion, _e.TextoPequenoCentrado);
@@ -610,7 +610,7 @@ namespace DesenredaElOvillo.Juego
             var r = new Rect(260, 110, 1400, 860);
             Panel(r, _e.Panel);
             float bote = Mathf.Abs(Mathf.Sin(Time.unscaledTime * 5f)) * 30f;
-            GUI.DrawTexture(new Rect(r.x + 60, r.y + 160 - bote, 420, 420), Tex(Texturas.Ovillo()), ScaleMode.ScaleToFit);
+            GUI.DrawTexture(new Rect(r.x + 60, r.y + 160 - bote, 420, 420), Tex(Iconos.Ovillo()), ScaleMode.ScaleToFit);
             GUI.Label(new Rect(r.x + 500, r.y + 50, r.width - 560, 80), "¡Has salvado el taller!", _e.Titulo);
             var e = p.Estadisticas;
             GUI.Label(new Rect(r.x + 520, r.y + 160, r.width - 580, 300),
@@ -637,7 +637,7 @@ namespace DesenredaElOvillo.Juego
             var r = new Rect(360, 160, 1200, 760);
             Panel(r, _e.Panel);
             GUI.Label(new Rect(r.x, r.y + 40, r.width, 80), "¡Las polillas se han comido el carrete!", _e.Titulo);
-            var retrato = Texturas.Retrato("comun");
+            var retrato = Iconos.Retrato("comun");
             if (retrato != null) GUI.DrawTexture(new Rect(r.x + 70, r.y + 170, 330, 330), retrato, ScaleMode.ScaleToFit);
             var e = p.Estadisticas;
             GUI.Label(new Rect(r.x + 440, r.y + 170, r.width - 500, 300),
@@ -683,25 +683,25 @@ namespace DesenredaElOvillo.Juego
             public Estilos()
             {
                 var ciruela = Paleta.Hex("#6E2F4C");
-                Panel = Caja(Texturas.Panel(Paleta.Crema, Paleta.Hex("#C98A5A"), "ui_panel"), 30);
-                PanelOscuro = Caja(Texturas.Panel(Paleta.Hex("#5A3A28"), Paleta.Hex("#E9C79E"), "ui_panel_oscuro"), 30);
-                PanelLogo = Caja(Texturas.Panel(Paleta.Hex("#F4D3A8"), Paleta.Hex("#B5683D"), "ui_panel_logo"), 30);
-                Tarjeta = Caja(Texturas.Panel(Paleta.Hex("#FBEBD2"), Paleta.Hex("#B98AC2"), "ui_tarjeta"), 30);
-                Tarjeta.hover.background = Texturas.Panel(Paleta.Hex("#FFF3DF"), Paleta.Hex("#9B6CC0"), "ui_tarjeta_hover");
-                TarjetaMarcada = Caja(Texturas.Panel(Paleta.Hex("#FFE3A3"), Paleta.Coral, "ui_tarjeta_marcada"), 30);
+                Panel = Caja(Iconos.Panel(Paleta.Crema, Paleta.Hex("#C98A5A"), "ui_panel"), 30);
+                PanelOscuro = Caja(Iconos.Panel(Paleta.Hex("#5A3A28"), Paleta.Hex("#E9C79E"), "ui_panel_oscuro"), 30);
+                PanelLogo = Caja(Iconos.Panel(Paleta.Hex("#F4D3A8"), Paleta.Hex("#B5683D"), "ui_panel_logo"), 30);
+                Tarjeta = Caja(Iconos.Panel(Paleta.Hex("#FBEBD2"), Paleta.Hex("#B98AC2"), "ui_tarjeta"), 30);
+                Tarjeta.hover.background = Iconos.Panel(Paleta.Hex("#FFF3DF"), Paleta.Hex("#9B6CC0"), "ui_tarjeta_hover");
+                TarjetaMarcada = Caja(Iconos.Panel(Paleta.Hex("#FFE3A3"), Paleta.Coral, "ui_tarjeta_marcada"), 30);
                 TarjetaMarcada.hover.background = TarjetaMarcada.normal.background;
 
-                Boton = Caja(Texturas.Panel(Paleta.Coral, Paleta.Crema, "ui_boton"), 26);
-                Boton.hover.background = Texturas.Panel(Paleta.Aclarar(Paleta.Coral, 0.12f), Paleta.Crema, "ui_boton_hover");
-                Boton.active.background = Texturas.Panel(Paleta.Oscurecer(Paleta.Coral, 0.15f), Paleta.Crema, "ui_boton_activo");
+                Boton = Caja(Iconos.Panel(Paleta.Coral, Paleta.Crema, "ui_boton"), 26);
+                Boton.hover.background = Iconos.Panel(Paleta.Aclarar(Paleta.Coral, 0.12f), Paleta.Crema, "ui_boton_hover");
+                Boton.active.background = Iconos.Panel(Paleta.Oscurecer(Paleta.Coral, 0.15f), Paleta.Crema, "ui_boton_activo");
                 Boton.normal.textColor = Boton.hover.textColor = Boton.active.textColor = Color.white;
                 Boton.fontSize = 30;
                 Boton.fontStyle = FontStyle.Bold;
                 Boton.alignment = TextAnchor.MiddleCenter;
 
-                BotonSecundario = Caja(Texturas.Panel(Paleta.Hex("#F3DDBB"), Paleta.Hex("#B5683D"), "ui_boton2"), 26);
-                BotonSecundario.hover.background = Texturas.Panel(Paleta.Hex("#FBEAD0"), Paleta.Hex("#B5683D"), "ui_boton2_hover");
-                BotonSecundario.active.background = Texturas.Panel(Paleta.Hex("#E2C59C"), Paleta.Hex("#B5683D"), "ui_boton2_activo");
+                BotonSecundario = Caja(Iconos.Panel(Paleta.Hex("#F3DDBB"), Paleta.Hex("#B5683D"), "ui_boton2"), 26);
+                BotonSecundario.hover.background = Iconos.Panel(Paleta.Hex("#FBEAD0"), Paleta.Hex("#B5683D"), "ui_boton2_hover");
+                BotonSecundario.active.background = Iconos.Panel(Paleta.Hex("#E2C59C"), Paleta.Hex("#B5683D"), "ui_boton2_activo");
                 BotonSecundario.normal.textColor = BotonSecundario.hover.textColor = BotonSecundario.active.textColor = Paleta.Tinta;
                 BotonSecundario.fontSize = 26;
                 BotonSecundario.fontStyle = FontStyle.Bold;

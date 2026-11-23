@@ -100,11 +100,15 @@ namespace DesenredaElOvillo.Juego
 
         private float D(float segundos) => segundos / Mathf.Max(1, Velocidad);
 
+        /// <summary>Posición de los pies de una polilla en la casilla (encima de la lana).</summary>
         private Vector3 Pos(int indice)
         {
             indice = Mathf.Clamp(indice, 0, _recorrido.Cantidad - 1);
-            return VistaTablero.Mundo(_recorrido.Celdas[indice]);
+            var c = _recorrido.Celdas[indice];
+            return new Vector3(c.X + 0.5f, Tres.Medidas.AlturaPolilla, c.Y + 0.5f);
         }
+
+        private static Vector3 Arriba(VistaPolilla v, float altura) => v.transform.position + Vector3.up * altura;
 
         private VistaPolilla Vista(Evento e)
         {
@@ -123,8 +127,8 @@ namespace DesenredaElOvillo.Juego
                     var nueva = VistaPolilla.Crear(_contenedor, e.PolillaId, e.TipoPolilla, Pos(0));
                     _polillas[e.PolillaId] = nueva;
                     Sonidos.Tocar(e.TipoPolilla == TipoPolilla.Reina ? Sonido.Reina : Sonido.Aparece);
-                    if (e.TipoPolilla == TipoPolilla.Reina) Flotar(Pos(0) + Vector3.up * 0.7f, "¡La Reina!", Paleta.Dorado, 1.6f, 40);
-                    if (e.Tipo == TipoEvento.Invocada) Flotar(Pos(0) + Vector3.up * 0.6f, "¡Refuerzos!", Paleta.RosaPastel);
+                    if (e.TipoPolilla == TipoPolilla.Reina) Flotar(Pos(0) + Vector3.up * 1.1f, "¡La Reina!", Paleta.Dorado, 1.6f, 40);
+                    if (e.Tipo == TipoEvento.Invocada) Flotar(Pos(0) + Vector3.up * 0.9f, "¡Refuerzos!", Paleta.RosaPastel);
                     yield return nueva.Aparecer(D(e.TipoPolilla == TipoPolilla.Reina ? 0.6f : 0.25f));
                     break;
                 }
@@ -155,33 +159,37 @@ namespace DesenredaElOvillo.Juego
                     break;
                 case TipoEvento.Danio:
                     if (v == null) break;
-                    Flotar(v.transform.position + Vector3.up * 0.45f, "-" + e.Valor, Paleta.Coral, 1f, 34);
+                    Flotar(Arriba(v, 0.75f), "-" + e.Valor, Paleta.Coral, 1f, 34);
                     Sonidos.Tocar(Sonido.Dano);
                     yield return v.Golpe(D(0.16f));
                     break;
                 case TipoEvento.Muere:
                     if (v == null) break;
                     Sonidos.Tocar(Sonido.Muere);
-                    Flotar(v.transform.position + Vector3.up * 0.3f, "¡Pof!", Paleta.Crema);
+                    Flotar(Arriba(v, 0.7f), "¡Pof!", Paleta.Crema);
                     _tablero.Saltar(0.5f);
                     yield return v.Morir(D(0.3f));
                     break;
                 case TipoEvento.Retenida:
                     if (v == null) break;
                     v.Pegada(true);
-                    Flotar(v.transform.position + Vector3.up * 0.55f, "¡Pegada!", Paleta.AzulSuave);
+                    Flotar(Arriba(v, 0.85f), "¡Pegada!", Paleta.AzulSuave);
                     yield return v.Aplastar(D(0.15f));
                     break;
                 case TipoEvento.SigueQuieta:
                     if (v == null) break;
                     v.Temblar(D(0.2f));
                     yield return Esperar(0.18f);
-                    if (v != null) v.Pegada(false);
+                    if (v != null)
+                    {
+                        v.Pegada(false);
+                        v.Deslumbrada(false);
+                    }
                     break;
                 case TipoEvento.Enredada:
                     if (v == null) break;
                     v.Enredada(true);
-                    Flotar(v.transform.position + Vector3.up * 0.55f, "¡Enredada!", Paleta.Mostaza);
+                    Flotar(Arriba(v, 0.85f), "¡Enredada!", Paleta.Mostaza);
                     yield return v.Aplastar(D(0.18f));
                     break;
                 case TipoEvento.QuietaEnredada:
@@ -194,31 +202,32 @@ namespace DesenredaElOvillo.Juego
                     break;
                 case TipoEvento.Empujada:
                     if (v == null) break;
-                    Flotar(v.transform.position + Vector3.up * 0.55f, "¡Boing!", Paleta.Mostaza);
+                    Flotar(Arriba(v, 0.85f), "¡Boing!", Paleta.Mostaza);
                     yield return v.Empujada(Pos(e.Hasta), D(0.38f));
                     break;
                 case TipoEvento.PlacaRota:
                     if (v == null) break;
                     Sonidos.Tocar(Sonido.Placa);
-                    Flotar(v.transform.position + Vector3.up * 0.6f, "¡Placa rota!", Paleta.Beige);
+                    Flotar(Arriba(v, 0.9f), "¡Placa rota!", Paleta.Beige);
                     yield return v.RomperPlaca(D(0.3f));
                     break;
                 case TipoEvento.Deslumbrada:
                     if (v == null) break;
                     v.Volando = false;
+                    v.Deslumbrada(true);
                     Sonidos.Tocar(Sonido.Deslumbra);
-                    Flotar(v.transform.position + Vector3.up * 0.6f, "¡Qué luz!", Paleta.Dorado);
+                    Flotar(Arriba(v, 0.9f), "¡Qué luz!", Paleta.Dorado);
                     yield return v.Aplastar(D(0.2f));
                     break;
                 case TipoEvento.Devora:
                     Sonidos.Tocar(Sonido.Mordisco);
                     _herramientas.Devorar(e.IndiceHerramienta, e.Herramienta);
-                    if (v != null) Flotar(v.transform.position + Vector3.up * 0.75f, "¡Ñam!", Paleta.RosaPastel, 1.2f, 38);
+                    if (v != null) Flotar(Arriba(v, 1.0f), "¡Ñam!", Paleta.RosaPastel, 1.2f, 38);
                     yield return Esperar(0.35f);
                     break;
                 case TipoEvento.LlamaAyuda:
                     Sonidos.Tocar(Sonido.Reina);
-                    if (v != null) Flotar(v.transform.position + Vector3.up * 0.9f, "¡A mí, mi corte!", Paleta.Dorado, 1.4f, 36);
+                    if (v != null) Flotar(Arriba(v, 1.15f), "¡A mí, mi corte!", Paleta.Dorado, 1.4f, 36);
                     yield return Esperar(0.45f);
                     break;
                 case TipoEvento.LlegaAlCarrete:
@@ -239,7 +248,7 @@ namespace DesenredaElOvillo.Juego
                     break;
                 case TipoEvento.DaLaVuelta:
                     if (v == null) break;
-                    Flotar(_tablero.PosicionCarrete + Vector3.up * 0.4f, "¡Otra vuelta!", Paleta.Dorado);
+                    Flotar(_tablero.PosicionCarrete + Vector3.up * 0.8f, "¡Otra vuelta!", Paleta.Dorado);
                     v.Teletransportar(Pos(0));
                     yield return v.Aparecer(D(0.4f));
                     break;
@@ -289,6 +298,18 @@ namespace DesenredaElOvillo.Juego
 
         private void Update()
         {
+            if (EnCurso && _tablero != null && _tablero.Ovillo != null)
+            {
+                VistaPolilla cercana = null;
+                float mejor = float.MaxValue;
+                foreach (var v in _polillas.Values)
+                {
+                    if (v == null || !v.gameObject.activeSelf) continue;
+                    float d = (v.transform.position - _tablero.PosicionCarrete).sqrMagnitude;
+                    if (d < mejor) { mejor = d; cercana = v; }
+                }
+                _tablero.Ovillo.MirarA(cercana != null ? cercana.transform.position : (Vector3?)null);
+            }
             for (int i = Textos.Count - 1; i >= 0; i--)
                 if (Time.time - Textos[i].Nacimiento > Textos[i].Vida) Textos.RemoveAt(i);
         }

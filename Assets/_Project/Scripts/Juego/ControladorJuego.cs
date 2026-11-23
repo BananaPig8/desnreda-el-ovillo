@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DesenredaElOvillo.Juego.Tres;
 using DesenredaElOvillo.Nucleo;
 using UnityEngine;
 
@@ -46,6 +47,7 @@ namespace DesenredaElOvillo.Juego
         public VistaHerramientas Herramientas { get; private set; }
         public ReproductorOleada Reproductor { get; private set; }
         public Interfaz Interfaz { get; private set; }
+        public Iluminacion Iluminacion { get; private set; }
 
         private Pantalla _volverA = Pantalla.Menu;
         private bool _tejiendo;
@@ -70,6 +72,8 @@ namespace DesenredaElOvillo.Juego
             }
             Camara = camara.GetComponent<CamaraJuego>();
             if (Camara == null) Camara = camara.gameObject.AddComponent<CamaraJuego>();
+            Iluminacion = Iluminacion.Crear(transform);
+            Iluminacion.PrepararCamara(camara);
 
             Tablero = Hijo<VistaTablero>("Tablero");
             Lana = Hijo<VistaLana>("Lana");
@@ -123,7 +127,8 @@ namespace DesenredaElOvillo.Juego
             Lana.Limpiar();
             if (Salas.Count == 0) return;
             Tablero.Construir(Salas[0].Tablero, ReglasBase.VidaCarrete, ReglasBase.VidaCarreteMaxima);
-            Camara.Encuadrar(Tablero.Encuadre, new Rect(860, 160, 1000, 820));
+            Camara.Encuadrar(Tablero.Encuadre, new Rect(860, 120, 1020, 880));
+            Camara.ReiniciarVista();
         }
 
         // ================================================================== navegación
@@ -189,6 +194,7 @@ namespace DesenredaElOvillo.Juego
             Reproductor.Limpiar();
             Tablero.Construir(sala.Tablero, Partida.VidaCarrete, ReglasBase.VidaCarreteMaxima);
             Camara.Encuadrar(Tablero.Encuadre, ZonaTablero);
+            Camara.ReiniciarVista();
             if (!conservarLana || Recorrido == null || Recorrido.Tablero != sala.Tablero)
             {
                 Recorrido = new Recorrido(sala.Tablero);
@@ -297,7 +303,10 @@ namespace DesenredaElOvillo.Juego
         private void AlTerminarOleada(ResultadoOleada resultado)
         {
             Partida.AplicarResultado(resultado, Recorrido.HiloUsado);
-            if (Partida.Fase == FasePartida.Victoria) Tablero.Saltar(30f);
+            if (Tablero.Ovillo == null) return;
+            if (Partida.Fase == FasePartida.Victoria) Tablero.Ovillo.Celebrar();
+            else if (Partida.Fase == FasePartida.Derrota) Tablero.Ovillo.Entristecer();
+            else Tablero.Ovillo.Saltar(1.5f);
         }
 
         // ================================================================== bucle
@@ -310,6 +319,14 @@ namespace DesenredaElOvillo.Juego
                 else if (Pantalla != Pantalla.Menu) Volver();
             }
             if (Pantalla != Pantalla.Juego || Pausado || Partida == null) return;
+
+            if (!Interfaz.RatonSobreInterfaz(EntradaJugador.PosicionRaton))
+            {
+                float rueda = EntradaJugador.Rueda;
+                if (Mathf.Abs(rueda) > 0.01f) Camara.Zoom(rueda);
+            }
+            int giro = EntradaJugador.Giro;
+            if (giro != 0) Camara.Girar(giro * 15f);
 
             if (Partida.Fase != FasePartida.Victoria && Partida.Fase != FasePartida.Derrota)
                 TiempoPartida += Time.unscaledDeltaTime;
@@ -352,8 +369,7 @@ namespace DesenredaElOvillo.Juego
                 return;
             }
 
-            var mundo = Camara.PantallaAMundo(raton);
-            bool dentro = Tablero.CeldaEn(mundo, out var celda);
+            bool dentro = Tablero.CeldaBajo(Camara.RayoDesdePantalla(raton), out var celda);
             ActualizarResalte(dentro, celda);
 
             if (EntradaJugador.DerechoPulsado)

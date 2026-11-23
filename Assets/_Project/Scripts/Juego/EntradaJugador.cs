@@ -95,6 +95,37 @@ namespace DesenredaElOvillo.Juego
             }
         }
 
+        /// <summary>Rueda del ratón (positivo = acercar).</summary>
+        public static float Rueda
+        {
+            get
+            {
+#if ENABLE_INPUT_SYSTEM && OVILLO_INPUT_SYSTEM
+                return Mouse.current != null ? Mouse.current.scroll.ReadValue().y / 120f : 0f;
+#else
+                return Input.mouseScrollDelta.y;
+#endif
+            }
+        }
+
+        /// <summary>Q/E: girar un poco la maqueta. Devuelve -1, 0 o 1.</summary>
+        public static int Giro
+        {
+            get
+            {
+#if ENABLE_INPUT_SYSTEM && OVILLO_INPUT_SYSTEM
+                if (Keyboard.current == null) return 0;
+                if (Keyboard.current.qKey.wasPressedThisFrame) return -1;
+                if (Keyboard.current.eKey.wasPressedThisFrame) return 1;
+                return 0;
+#else
+                if (Input.GetKeyDown(KeyCode.Q)) return -1;
+                if (Input.GetKeyDown(KeyCode.E)) return 1;
+                return 0;
+#endif
+            }
+        }
+
         /// <summary>Retroceso: deshace el último tramo de lana.</summary>
         public static bool Deshacer
         {
