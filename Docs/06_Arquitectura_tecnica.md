@@ -98,6 +98,8 @@ IMGUI escalado desde 1920×1080 para el prototipo (robusto, sin dependencias de 
 | CI (GitHub Actions) | Las dos anteriores en cada push | `.github/workflows/pruebas.yml` |
 | Laboratorio | Dificultad de cada sala y escenario | `dotnet run -c Release --project Tools/Laboratorio -- informe` |
 | Vista previa 3D | Geometría, materiales y composición sin abrir Unity | `Tools/VistaPreviaArte` (ver README) |
+| Verificación de mallas | Las ~100 mallas procedurales (con sus capas de pelusa): valores finitos, normales unitarias, índices válidos y triángulos orientados como sus normales | `dotnet run --project Tools/VistaPreviaArte -- verificar` (también en CI) |
+| Modelos de bloqueo | Exportación a glTF de los placeholders para Blender | `dotnet run --project Tools/VistaPreviaArte -- glb` |
 
 ## 6.9 Rendimiento (objetivo: 60 fps en un portátil de feria con gráfica integrada reciente)
 

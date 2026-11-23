@@ -10,6 +10,20 @@ public static class Programa
 {
     public static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "verificar") return VerificadorMallas.Ejecutar();
+        if (args.Length > 0 && args[0] == "glb")
+        {
+            string carpeta = args.Length > 1 ? args[1] : Path.Combine(RaizRepositorio(), "Docs", "Arte", "Bloqueo");
+            Directory.CreateDirectory(carpeta);
+            int n = 0;
+            foreach (var (nombre, modelo) in CatalogoModelos.Todos())
+            {
+                Glb.Exportar(modelo, Path.Combine(carpeta, nombre + ".glb"));
+                n++;
+            }
+            Console.WriteLine(n + " modelos de bloqueo (.glb) en " + Path.GetFullPath(carpeta));
+            return 0;
+        }
         string salida = args.Length > 0 ? args[0] : "salida_arte";
         Directory.CreateDirectory(salida);
         void Guardar(string nombre, Sprite s) => Png(Path.Combine(salida, nombre + ".png"), s.texture);

@@ -145,6 +145,7 @@ Etiquetas y paneles de **fieltro con pespunte**, botones como parches cosidos, i
 
 ## 4.9 Pipeline de producción (Blender → Unity)
 
+0. **Modelos de bloqueo:** `Docs/Arte/Bloqueo/*.glb` (27 modelos: personajes, herramientas, obstáculos, carrete, lámpara, decorado) son los placeholders del juego exportados a glTF con su jerarquía, pivotes y nombres de grupo (en el nombre del nodo y como propiedad personalizada `grupo`). Se abren en Blender (*Archivo → Importar → glTF*) como punto de partida o referencia de proporciones. Se regeneran con `dotnet run -c Release --project Tools/VistaPreviaArte -- glb`.
 1. **Modelado** en Blender a escala real de juego (1 casilla = 1 m), pivote en los pies, frente mirando a −Y de Blender (−Z de Unity).
 2. **Nombres de grupo** iguales a los del placeholder para que el código siga encontrando las piezas mientras se sustituyen las animaciones procedurales por clips. Ovillo: `cuerpo`, `brazo_izq`, `brazo_der`, `pie_izq`, `pie_der`, `bufanda`, `cola_bufanda`, `cara`, y por cada ojo `ojo_*`, `parpado_*`, `feliz_*`, `apretado_*`; bocas `boca_feliz`, `boca_o`, `boca_triste`. Polillas: `cuerpo`, `ala_izq`, `ala_der`, `patas`, `ojos`, `parpados`, `ojos_x`, `cara`, `placas`, `capa`, `corona`. Las piezas de expresiones alternativas empiezan ocultas.
 3. **Texturas** a 1024² (personajes principales) o 512² (polillas normales, herramientas); tileables de 512² para lana, fieltro, madera y tela. Exportar color (sRGB), normal (OpenGL, +Y) y máscara (rugosidad/pelusa).

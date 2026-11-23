@@ -23,6 +23,8 @@
 *.mp3 binary
 *.ttf binary
 *.otf binary
+*.glb binary
+*.fbx binary
 
 # Cuando el arte crezca, conviene pasar los binarios a Git LFS (ver Docs/06_Arquitectura_tecnica.md):
 # *.png filter=lfs diff=lfs merge=lfs -text

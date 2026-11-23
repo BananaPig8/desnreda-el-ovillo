@@ -47,6 +47,9 @@ dotnet run -c Release --project Tools/Laboratorio -- analizar sala3 --costurero 
 dotnet run -c Release --project Tools/Laboratorio -- analizar sala5 --costurero "..." --set "Reina.Vida=30"   # probar variantes
 dotnet run -c Release --project Tools/Laboratorio -- fijar sala2 --costurero "..."    # guarda una solución de referencia
 
+dotnet run -c Release --project Tools/VistaPreviaArte -- verificar          # control de calidad de las mallas (también en CI)
+dotnet run -c Release --project Tools/VistaPreviaArte -- glb                # regenera Docs/Arte/Bloqueo/*.glb (modelos de bloqueo para Blender)
+
 # Vista previa 3D (Node + Playwright):
 (cd Tools/VistaPreviaArte/visor && npm install && npm run navegador)   # three.js + Playwright con Chromium
 dotnet run -c Release --project Tools/VistaPreviaArte -- Tools/VistaPreviaArte/visor/datos

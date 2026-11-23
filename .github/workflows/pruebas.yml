@@ -17,3 +17,5 @@ jobs:
         run: dotnet test Tools/Pruebas/Pruebas.csproj --nologo
       - name: Compilar los scripts de Unity contra UnityEngine
         run: dotnet build Tools/VerificacionUnity/VerificacionUnity.csproj --nologo
+      - name: Verificar las mallas procedurales (normales, índices, orientación de triángulos)
+        run: dotnet run -c Release --project Tools/VistaPreviaArte/VistaPreviaArte.csproj -- verificar
